@@ -26,6 +26,10 @@ export default function App() {
     setIsAuthenticated(true);
   };
 
+  const handleBackToOnboarding = () => {
+    setShowOnboarding(true);
+  };
+
   if (showOnboarding) {
     return (
       <SafeAreaProvider>
@@ -37,7 +41,10 @@ export default function App() {
   if (!isAuthenticated) {
     return (
       <SafeAreaProvider>
-        <AuthScreen onAuthenticate={handleAuthenticate} />
+        <AuthScreen 
+          onAuthenticate={handleAuthenticate} 
+          onBackToOnboarding={handleBackToOnboarding}
+        />
       </SafeAreaProvider>
     );
   }
