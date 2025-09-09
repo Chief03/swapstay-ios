@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend (React Native/Expo)
+frontend/.expo/
+frontend/.expo-shared/
+frontend/dist/
+frontend/web-build/
+frontend/*.jks
+frontend/*.p8
+frontend/*.p12
+frontend/*.key
+frontend/*.mobileprovision
+frontend/*.orig.*
+
+# iOS build files
+frontend/ios/Pods/
+frontend/ios/build/
+frontend/ios/Podfile.lock
+frontend/ios/**/*.xcworkspace/xcuserdata/
+frontend/ios/**/*.xcodeproj/xcuserdata/
+frontend/ios/**/*.xcodeproj/project.xcworkspace/
+
+# Backend
+backend/dist/
+backend/build/
+backend/.env
+backend/.env.local
+backend/logs/
+backend/*.log
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+._*
+
+# Build files
+*.tsbuildinfo
+build/
+dist/
+
+# Metro
+.metro-health-check*
+
+# Testing
+coverage/
+*.test.js
+*.spec.js
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+tmp/
+temp/
+
+# Misc
+README_CONTEXT.md
+*.log

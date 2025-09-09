@@ -1,0 +1,39 @@
+{
+  "name": "swapstay-monorepo",
+  "version": "1.0.0",
+  "description": "SwapStay - College Housing Exchange Platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "clean": "rm -rf node_modules frontend/node_modules backend/node_modules"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/swapstay.git"
+  },
+  "keywords": [
+    "college",
+    "housing",
+    "swap",
+    "students",
+    "react-native",
+    "expo",
+    "nodejs",
+    "typescript"
+  ],
+  "author": "SwapStay Team",
+  "license": "MIT"
+}
