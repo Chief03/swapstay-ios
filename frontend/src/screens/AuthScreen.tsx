@@ -14,10 +14,12 @@ import {
   FlatList,
   Modal,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import apiService from '../services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -37,6 +39,10 @@ const POPULAR_UNIVERSITIES = [
   'NYU',
   'University of Michigan',
   'University of Texas at Austin',
+  'Texas Tech University',
+  'Texas A&M University',
+  'Rice University',
+  'SMU',
   'Boston University',
   'Northwestern University',
   'Duke University',
@@ -47,6 +53,93 @@ const POPULAR_UNIVERSITIES = [
   'Carnegie Mellon University',
   'Georgetown University',
   'University of Washington',
+  'Arizona State University',
+  'University of Arizona',
+  'USC',
+  'UC San Diego',
+  'UC Irvine',
+  'UC Santa Barbara',
+  'University of Florida',
+  'Florida State University',
+  'Georgia Tech',
+  'University of Georgia',
+  'Vanderbilt University',
+  'University of North Carolina',
+  'NC State University',
+  'Virginia Tech',
+  'University of Virginia',
+  'Ohio State University',
+  'Purdue University',
+  'Indiana University',
+  'University of Illinois',
+  'University of Wisconsin',
+  'University of Minnesota',
+  'Michigan State University',
+  'Penn State University',
+  'University of Maryland',
+  'Rutgers University',
+  'University of Colorado Boulder',
+  'Colorado State University',
+  'University of Oregon',
+  'Oregon State University',
+  'University of Utah',
+  'BYU',
+  'Baylor University',
+  'TCU',
+  'University of Oklahoma',
+  'Oklahoma State University',
+  'University of Kansas',
+  'Kansas State University',
+  'University of Missouri',
+  'University of Iowa',
+  'Iowa State University',
+  'University of Nebraska',
+  'University of Alabama',
+  'Auburn University',
+  'LSU',
+  'University of Tennessee',
+  'University of Kentucky',
+  'University of South Carolina',
+  'Clemson University',
+  'University of Miami',
+  'University of Pittsburgh',
+  'Syracuse University',
+  'University of Connecticut',
+  'Northeastern University',
+  'Boston College',
+  'Tufts University',
+  'University of Rochester',
+  'Case Western Reserve University',
+  'University of Cincinnati',
+  'University of Delaware',
+  'Drexel University',
+  'Temple University',
+  'Villanova University',
+  'University of Notre Dame',
+  'Marquette University',
+  'DePaul University',
+  'Loyola University Chicago',
+  'Saint Louis University',
+  'Washington University in St. Louis',
+  'Emory University',
+  'Tulane University',
+  'Wake Forest University',
+  'University of Richmond',
+  'William & Mary',
+  'James Madison University',
+  'George Washington University',
+  'American University',
+  'Howard University',
+  'Hampton University',
+  'Morehouse College',
+  'Spelman College',
+  'Xavier University',
+  'Prairie View A&M University',
+  'University of Houston',
+  'University of North Texas',
+  'UT Dallas',
+  'UT San Antonio',
+  'Texas State University',
 ];
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboarding }) => {
@@ -54,11 +147,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [university, setUniversity] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showUniversityPicker, setShowUniversityPicker] = useState(false);
   const [filteredUniversities, setFilteredUniversities] = useState(POPULAR_UNIVERSITIES);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -96,7 +191,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
     }
   }, [university]);
 
-  const handleAuth = () => {
+  const handleAuth = async () => {
     if (!email.endsWith('.edu')) {
       Alert.alert(
         'University Email Required',
@@ -116,13 +211,59 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
       return;
     }
 
+    if (!isLogin && !fullName) {
+      Alert.alert('Name Required', 'Please enter your full name');
+      return;
+    }
+
     if (password.length < 8) {
       Alert.alert('Weak Password', 'Password must be at least 8 characters long');
       return;
     }
 
-    // In a real app, this would call an API
-    onAuthenticate();
+    setIsLoading(true);
+
+    try {
+      let response;
+      
+      if (isLogin) {
+        response = await apiService.login({
+          email: email.toLowerCase(),
+          password,
+        });
+      } else {
+        const universityDomain = email.split('@')[1];
+        response = await apiService.register({
+          fullName,
+          email: email.toLowerCase(),
+          password,
+          university,
+          universityDomain,
+        });
+      }
+
+      if (response.success) {
+        if (!isLogin) {
+          Alert.alert(
+            'Registration Successful',
+            'Please check your email to verify your account before logging in.',
+            [{ text: 'OK', onPress: () => setIsLogin(true) }]
+          );
+        } else {
+          onAuthenticate();
+        }
+      } else {
+        Alert.alert('Error', response.message || 'Something went wrong');
+      }
+    } catch (error: any) {
+      console.error('Auth error:', error);
+      Alert.alert(
+        'Error',
+        error.message || 'Failed to connect to server. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const selectUniversity = (uni: string) => {
@@ -279,6 +420,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
                         style={styles.input}
                         placeholder="Full Name"
                         placeholderTextColor="#999"
+                        value={fullName}
+                        onChangeText={setFullName}
                         autoCapitalize="words"
                       />
                     </View>
@@ -332,17 +475,28 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={styles.authButton} onPress={handleAuth} activeOpacity={0.8}>
+              <TouchableOpacity 
+                style={[styles.authButton, isLoading && styles.authButtonDisabled]} 
+                onPress={handleAuth} 
+                activeOpacity={0.8}
+                disabled={isLoading}
+              >
                 <LinearGradient
-                  colors={['#667eea', '#764ba2']}
+                  colors={isLoading ? ['#95a5a6', '#7f8c8d'] : ['#667eea', '#764ba2']}
                   style={styles.authButtonGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <Text style={styles.authButtonText}>
-                    {isLogin ? 'Sign In to SwapStay' : 'Join the Community'}
-                  </Text>
-                  <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                  {isLoading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <>
+                      <Text style={styles.authButtonText}>
+                        {isLogin ? 'Sign In to SwapStay' : 'Join the Community'}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
+                    </>
+                  )}
                 </LinearGradient>
               </TouchableOpacity>
 
@@ -616,6 +770,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 6,
+  },
+  authButtonDisabled: {
+    opacity: 0.7,
   },
   authButtonGradient: {
     flexDirection: 'row',
