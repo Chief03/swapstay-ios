@@ -121,8 +121,9 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
           Alert.alert('Error', 'Please enter the nearest university');
           return false;
         }
-        if (!distanceToCampus || parseFloat(distanceToCampus) < 0) {
-          Alert.alert('Error', 'Please enter valid distance to campus');
+        // Distance to campus is optional
+        if (distanceToCampus && parseFloat(distanceToCampus) < 0) {
+          Alert.alert('Error', 'Distance to campus must be positive if provided');
           return false;
         }
         return true;
@@ -181,7 +182,7 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
           zipCode,
         },
         nearUniversity,
-        distanceToCampus: parseFloat(distanceToCampus),
+        distanceToCampus: distanceToCampus ? parseFloat(distanceToCampus) : undefined,
         neighborhood,
         availableFrom,
         availableTo,
@@ -208,7 +209,7 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
           [
             {
               text: 'OK',
-              onPress: () => navigation.navigate('Home'),
+              onPress: () => navigation.goBack(),
             },
           ]
         );
@@ -429,10 +430,10 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
         onChangeText={setNearUniversity}
       />
       
-      <Text style={styles.label}>Distance to Campus (miles)</Text>
+      <Text style={styles.label}>Distance to Campus (miles) - Optional</Text>
       <TextInput
         style={styles.input}
-        placeholder="e.g., 1.5"
+        placeholder="e.g., 1.5 (optional)"
         value={distanceToCampus}
         onChangeText={setDistanceToCampus}
         keyboardType="decimal-pad"

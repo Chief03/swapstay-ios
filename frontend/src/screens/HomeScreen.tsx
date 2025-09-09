@@ -149,7 +149,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   const renderListingCard = ({ item }: { item: Listing }) => (
     <TouchableOpacity
       style={styles.listingCard}
-      onPress={() => navigation.navigate('ListingDetail', { listingId: item._id })}
+      onPress={() => {
+        // TODO: Navigate to ListingDetail when screen is created
+        // navigation.navigate('ListingDetail', { listingId: item._id })
+        Alert.alert('Coming Soon', 'Listing detail view will be available soon!');
+      }}
       activeOpacity={0.8}
     >
       {item.photos && item.photos.length > 0 ? (
@@ -358,7 +362,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Listings</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('AllListings')}>
+            <TouchableOpacity onPress={() => {
+              // TODO: Navigate to AllListings when screen is created
+              Alert.alert('Coming Soon', 'All listings view will be available soon!');
+            }}>
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
