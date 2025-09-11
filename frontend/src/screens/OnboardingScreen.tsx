@@ -164,9 +164,16 @@ const OnboardingScreen: React.FC<OnboardingProps> = ({ onComplete }) => {
       />
       
       <SafeAreaView style={styles.safeArea}>
-        <TouchableOpacity style={styles.skipButton} onPress={onComplete}>
-          <Text style={styles.skipText}>Skip</Text>
-        </TouchableOpacity>
+        <View style={styles.headerContainer}>
+          <Image 
+            source={require('../../assets/logo.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <TouchableOpacity style={styles.skipButton} onPress={onComplete}>
+            <Text style={styles.skipText}>Skip</Text>
+          </TouchableOpacity>
+        </View>
 
         <ScrollView
           ref={scrollViewRef}
@@ -256,11 +263,21 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
-  skipButton: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
     zIndex: 10,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+  },
+  skipButton: {
     paddingHorizontal: 20,
     paddingVertical: 10,
     backgroundColor: 'rgba(255,255,255,0.9)',

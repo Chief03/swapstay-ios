@@ -254,9 +254,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>Welcome back!</Text>
-            <Text style={styles.headerTitle}>Find Your Perfect Swap</Text>
+          <View style={styles.headerLeft}>
+            <Image 
+              source={require('../../assets/logo.png')} 
+              style={styles.headerLogo}
+              resizeMode="contain"
+            />
+            <View style={styles.headerText}>
+              <Text style={styles.greeting}>Welcome back!</Text>
+              <Text style={styles.headerTitle}>Find Your Perfect Swap</Text>
+            </View>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <View style={styles.profileButton}>
@@ -437,6 +444,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 20,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerLogo: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+  headerText: {
+    flex: 1,
   },
   greeting: {
     fontSize: 14,

@@ -322,7 +322,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
               ]}
             >
               <View style={styles.logoContainer}>
-                <MaterialCommunityIcons name="home-city" size={50} color="#fff" />
+                <Image 
+                  source={require('../../assets/logo.png')} 
+                  style={styles.logoImage}
+                  resizeMode="contain"
+                />
               </View>
               <Text style={styles.appName}>SwapStay</Text>
               <Text style={styles.tagline}>Exclusive College Housing Exchange</Text>
@@ -621,7 +625,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -631,6 +635,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 8,
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 80,
+    height: 80,
   },
   appName: {
     fontSize: 36,
