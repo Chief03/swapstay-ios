@@ -150,9 +150,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     <TouchableOpacity
       style={styles.listingCard}
       onPress={() => {
-        // TODO: Navigate to ListingDetail when screen is created
-        // navigation.navigate('ListingDetail', { listingId: item._id })
-        Alert.alert('Coming Soon', 'Listing detail view will be available soon!');
+        navigation.navigate('ListingDetail', { listingId: item._id });
       }}
       activeOpacity={0.8}
     >
@@ -285,7 +283,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               onSubmitEditing={handleSearch}
             />
           </View>
-          <TouchableOpacity style={styles.filterButton} onPress={() => navigation.navigate('Filter')}>
+          <TouchableOpacity style={styles.filterButton} onPress={() => {
+            // TODO: Implement filter modal or navigate to filter screen
+            Alert.alert('Filters', 'Filter functionality coming soon!');
+          }}>
             <Ionicons name="options-outline" size={24} color="#667eea" />
           </TouchableOpacity>
         </View>

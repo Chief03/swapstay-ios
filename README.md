@@ -145,8 +145,12 @@ swapstay/
 ```bash
 cd frontend
 npm install
-npx expo start --ios     # For iOS Simulator
-npx expo start           # For Expo Go app on phone
+npx expo start           # For Expo Go app
+
+# For testing on physical device:
+# 1. Update frontend/.env with your computer's IP:
+#    EXPO_PUBLIC_API_URL=http://YOUR_IP:5001/api/v1
+# 2. Connect via Expo Go: exp://YOUR_IP:8081
 ```
 
 ### Backend (API)
@@ -157,6 +161,12 @@ mongod  # Or: brew services start mongodb-community
 cd backend
 npm install
 npm run dev              # Starts on http://localhost:5001
+```
+
+### Test Account
+```
+Email: test@stanford.edu
+Password: password123
 ```
 
 ## 🎨 UI/UX Flow
@@ -175,13 +185,21 @@ npm run dev              # Starts on http://localhost:5001
 
 ## 🔄 Last Working Session Context
 
-**Latest Updates (Sep 11, 2025 - 1:05 PM):**
+**Latest Updates (Sep 11, 2025 - 2:15 PM):**
+- ✅ **BUG FIXES & STABILITY IMPROVEMENTS**
+  - Fixed ListingDetail crash (added null checks for swapPreferences)
+  - Fixed Filter button navigation error (added placeholder)
+  - Fixed network connectivity for phone testing (using IP address)
+  - Created test account: test@stanford.edu / password123
+  - Updated API URL for mobile device testing
+
+**Previous Updates (Sep 11, 2025 - 1:05 PM):**
 - ✅ **LOGO INTEGRATION COMPLETE!**
   - Added custom SwapStay logo with purple gradient and swap symbol
   - Logo integrated into Onboarding, Authentication, and Home screens
   - Professional branding throughout the app
 
-**Previous Updates (Sep 9, 2025 - 8:00 PM):**
+**Session 4 (Sep 9, 2025 - 8:00 PM):**
 - ✅ **BUG FIXES & IMPROVEMENTS**
   - Fixed navigation structure with Stack Navigator for modals
   - Fixed "Create Listing" navigation after successful submission
@@ -223,7 +241,7 @@ npm run dev              # Starts on http://localhost:5001
 
 **Known Issues:**
 - Email verification is disabled for testing (needs email service integration)
-- ListingDetail and AllListings screens not yet implemented
+- Filter screen not yet implemented (shows placeholder alert)
 
 ## 🚦 Next Steps (TODO)
 
@@ -308,6 +326,6 @@ The architecture allows for:
 
 ---
 
-**Last Updated:** September 11, 2025, 1:05 PM
-**Status:** 🚀 Full marketplace platform with professional branding!
-**Achievement:** Complete housing exchange marketplace with custom logo integration and polished UI!
+**Last Updated:** September 11, 2025, 2:15 PM
+**Status:** 🚀 Stable marketplace platform ready for testing!
+**Achievement:** Complete housing exchange marketplace with bug fixes, mobile testing support, and professional branding!

@@ -3,19 +3,39 @@
 ## 🚀 Services Status
 ✅ **Backend API:** Running on http://localhost:5001
 ✅ **MongoDB:** Running on localhost:27017
-✅ **Frontend:** Running on iOS Simulator
+✅ **Frontend:** Running with Expo
+✅ **Metro Bundler:** Active on http://localhost:8081
+✅ **Local IP:** 192.168.1.222:8081 (for phone testing)
+
+## 📱 Testing on Your Phone
+
+### Quick Setup:
+1. **Install Expo Go** on your iPhone from App Store
+2. **Ensure WiFi**: Phone and laptop on same network
+3. **Open Expo Go** and tap "Enter URL manually"
+4. **Enter**: `exp://192.168.1.222:8081`
+5. **Press Connect** - SwapStay will load!
+
+### Alternative - VS Code Port Forwarding:
+1. In VS Code, open Ports panel (View → Terminal → Ports)
+2. Forward port 8081
+3. Use the forwarded URL in Expo Go
 
 ## 📱 Testing the App
 
 ### 1. Authentication Flow Testing
 1. **Onboarding:** 
+   - ✨ **NEW**: SwapStay logo displays at top
    - Swipe through 3 intro screens or click "Skip"
    
 2. **Sign Up (New User):**
+   - ✨ **NEW**: Logo displays in auth header
    - Click "Sign Up" on auth screen
    - Enter a .edu email (e.g., john.doe@university.edu)
-   - Select a university from the dropdown
-   - Enter a password (min 6 characters)
+   - Select a university from dropdown (100+ universities including Texas Tech!)
+   - Enter full name
+   - Enter a password (min 8 characters)
+   - Confirm password
    - Submit to create account
 
 3. **Sign In (Existing User):**
@@ -25,17 +45,30 @@
 ### 2. Main App Features
 
 #### Home Screen
+- ✨ **NEW**: SwapStay logo in header
 - **View Listings:** Browse featured and recent listings
+- ✨ **NEW**: Tap any listing to open detailed view
 - **Pull to Refresh:** Swipe down to refresh listings
 - **Filter Chips:** Quick filters for Swap/Rent/Both
 - **Create Listing:** Tap the floating "+" button
 
-#### Create Listing (5-Step Wizard)
-1. **Listing Type:** Choose SWAP_ONLY, RENT_ONLY, or BOTH
-2. **Property Details:** Type, bedrooms, bathrooms, size
-3. **Location:** Address and university association
-4. **Availability:** Select dates with calendar picker
-5. **Pricing:** Set rental price (if applicable)
+#### 🎯 Listing Detail Screen (COMPLETELY NEW!)
+- **Image Gallery:** Swipe through property photos
+- **Property Info:** Type, bedrooms, bathrooms, size with icons
+- **Location:** Full address with university proximity
+- **Availability:** Date range with flexible indicator
+- **Pricing:** Monthly rent, deposit, utilities status
+- **Amenities Grid:** WiFi, parking, laundry, A/C, etc.
+- **Owner Section:** Profile with verified badge
+- **Actions:** Contact owner button, favorite, share, report
+
+#### Create Listing (NOW 6-STEP WIZARD!)
+1. **Basic Info:** Title, description, listing type (SWAP/RENT/BOTH)
+2. **Property Details:** Type with icons, bedrooms, bathrooms, size
+3. **Location:** Full address and university association
+4. **Availability & Pricing:** Dates, rent, deposit, utilities
+5. **Amenities:** Toggle switches for 10+ amenities
+6. ✨ **NEW - Photos:** Upload up to 10 photos from gallery or camera
 
 #### Search Screen
 - Search by location, university, or property type
@@ -215,7 +248,16 @@ brew services stop mongodb-community
 ```
 
 ## 📝 Notes
+- ✅ **Logo is now integrated** throughout the app (SwapStay purple gradient logo)
+- ✅ **Listing Detail Screen** is fully functional with navigation
+- ✅ **Photo upload** works in Create Listing (Step 6)
 - Email verification is simulated (no actual emails sent)
 - Messaging system is UI-only (backend not implemented)
 - Native Swift module works only in development builds, not Expo Go
-- Logo placeholder is shown (add actual logo to frontend/assets/logo.png)
+
+## 🎉 What's New in This Version
+1. **SwapStay Logo** - Custom purple gradient logo on all screens
+2. **ListingDetailScreen** - Complete property detail view with gallery
+3. **Enhanced CreateListing** - Now 6 steps with photo upload
+4. **Image Picker** - Gallery and camera support for listing photos
+5. **Navigation Fixed** - All listing cards now navigate to detail view

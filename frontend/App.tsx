@@ -13,6 +13,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import CreateListingScreen from './src/screens/CreateListingScreen';
+import ListingDetailScreen from './src/screens/ListingDetailScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -115,6 +116,13 @@ export default function App() {
               headerTitleStyle: {
                 fontWeight: 'bold',
               },
+            }}
+          />
+          <Stack.Screen 
+            name="ListingDetail" 
+            component={ListingDetailScreen}
+            options={{ 
+              headerShown: false,
             }}
           />
         </Stack.Navigator>

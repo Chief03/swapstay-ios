@@ -11,11 +11,13 @@ import {
   Platform,
   Switch,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import apiService from '../services/api';
 
 interface CreateListingScreenProps {
@@ -86,7 +88,10 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
     pool: false,
   });
 
-  const totalSteps = 5;
+  // Step 6: Photos
+  const [photos, setPhotos] = useState<string[]>([]);
+
+  const totalSteps = 6;
 
   const validateCurrentStep = () => {
     switch (currentStep) {
@@ -163,6 +168,50 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
     }
   };
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need camera roll permissions to upload photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.8,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets) {
+      const newPhotos = result.assets.map(asset => asset.uri);
+      setPhotos([...photos, ...newPhotos].slice(0, 10)); // Limit to 10 photos
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'We need camera permissions to take photos.');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      quality: 0.8,
+      base64: false,
+    });
+
+    if (!result.canceled && result.assets) {
+      setPhotos([...photos, result.assets[0].uri].slice(0, 10));
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    const newPhotos = photos.filter((_, i) => i !== index);
+    setPhotos(newPhotos);
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     
@@ -197,7 +246,10 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
           petsAllowed: amenities.petFriendly,
           guestsAllowed: true,
         },
-        photos: [], // Will add photo upload later
+        photos: photos.map((uri, index) => ({
+          url: uri,
+          caption: `Photo ${index + 1}`,
+        }))
       };
       
       const response = await apiService.createListing(listingData);
@@ -226,7 +278,7 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
 
   const renderStepIndicator = () => (
     <View style={styles.stepIndicator}>
-      {[1, 2, 3, 4, 5].map((step) => (
+      {[1, 2, 3, 4, 5, 6].map((step) => (
         <View key={step} style={styles.stepWrapper}>
           <View
             style={[
@@ -243,7 +295,7 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
               {step}
             </Text>
           </View>
-          {step < 5 && (
+          {step < 6 && (
             <View
               style={[
                 styles.stepLine,
@@ -572,6 +624,52 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
     </View>
   );
 
+  const renderStep6 = () => (
+    <View style={styles.stepContent}>
+      <Text style={styles.stepTitle}>Photos</Text>
+      <Text style={styles.stepSubtitle}>Add up to 10 photos of your space</Text>
+      
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosContainer}>
+        {photos.map((photo, index) => (
+          <View key={index} style={styles.photoWrapper}>
+            <Image source={{ uri: photo }} style={styles.photoThumbnail} />
+            <TouchableOpacity
+              style={styles.removePhotoButton}
+              onPress={() => removePhoto(index)}
+            >
+              <Ionicons name="close-circle" size={24} color="#e74c3c" />
+            </TouchableOpacity>
+          </View>
+        ))}
+        
+        {photos.length < 10 && (
+          <View style={styles.addPhotoButtons}>
+            <TouchableOpacity style={styles.addPhotoButton} onPress={pickImage}>
+              <Ionicons name="images-outline" size={32} color="#667eea" />
+              <Text style={styles.addPhotoText}>Gallery</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.addPhotoButton} onPress={takePhoto}>
+              <Ionicons name="camera-outline" size={32} color="#667eea" />
+              <Text style={styles.addPhotoText}>Camera</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+      
+      <Text style={styles.photoCount}>{photos.length}/10 photos</Text>
+      
+      {photos.length === 0 && (
+        <View style={styles.photoTip}>
+          <Ionicons name="information-circle-outline" size={20} color="#666" />
+          <Text style={styles.photoTipText}>
+            Add photos to attract more interest. Listings with photos get 3x more views!
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+
   const renderCurrentStep = () => {
     switch (currentStep) {
       case 1:
@@ -584,6 +682,8 @@ const CreateListingScreen: React.FC<CreateListingScreenProps> = ({ navigation })
         return renderStep4();
       case 5:
         return renderStep5();
+      case 6:
+        return renderStep6();
       default:
         return null;
     }
@@ -890,6 +990,66 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+  },
+  photosContainer: {
+    marginVertical: 20,
+  },
+  photoWrapper: {
+    position: 'relative',
+    marginRight: 10,
+  },
+  photoThumbnail: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
+  addPhotoButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  addPhotoButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#667eea',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  addPhotoText: {
+    fontSize: 12,
+    color: '#667eea',
+    marginTop: 5,
+  },
+  photoCount: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  photoTip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f4ff',
+    padding: 15,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  photoTipText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
+    flex: 1,
   },
 });
 
