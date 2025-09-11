@@ -9,9 +9,14 @@ import {
   Switch,
   Platform,
   Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../contexts/ThemeContext';
+import apiService from '../services/api';
 
 let SwapstayNative: any = null;
 try {
@@ -31,35 +36,99 @@ interface UserProfile {
   memberSince: string;
 }
 
-const ProfileScreen = () => {
+interface ProfileScreenProps {
+  navigation: any;
+}
+
+const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(false);
   const [isStudentVerified, setIsStudentVerified] = useState(false);
-
-  const userProfile: UserProfile = {
-    name: 'John Doe',
-    email: 'john.doe@university.edu',
-    university: 'Stanford University',
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: '',
+    email: '',
+    university: '',
     avatar: 'https://i.pravatar.cc/150?img=8',
-    verified: true,
-    swapsCompleted: 12,
-    rating: 4.9,
-    memberSince: 'September 2023',
-  };
+    verified: false,
+    swapsCompleted: 0,
+    rating: 0,
+    memberSince: '',
+  });
+
+  // Fetch user data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserProfile();
+    }, [])
+  );
 
   useEffect(() => {
-    verifyStudentEmail();
+    loadUserProfile();
   }, []);
 
-  const verifyStudentEmail = async () => {
-    if (SwapstayNative && Platform.OS === 'ios') {
-      try {
-        const isVerified = await SwapstayNative.verifyStudent(userProfile.email);
-        setIsStudentVerified(isVerified);
-      } catch (error) {
-        console.log('Verification not available in Expo Go');
+  const loadUserProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getCurrentUser();
+      
+      if (response.data) {
+        const user = response.data;
+        
+        // Format the name
+        const displayName = user.firstName && user.lastName 
+          ? `${user.firstName} ${user.lastName}`
+          : user.fullName || 'User';
+        
+        // Format member since date
+        const memberDate = new Date(user.createdAt);
+        const memberSince = memberDate.toLocaleDateString('en-US', { 
+          month: 'long', 
+          year: 'numeric' 
+        });
+        
+        setUserProfile({
+          name: displayName,
+          email: user.email,
+          university: user.university,
+          avatar: user.profilePicture || 'https://i.pravatar.cc/150?img=8',
+          verified: user.emailVerified,
+          swapsCompleted: user.swapsCompleted || 0,
+          rating: user.rating || 0,
+          memberSince: memberSince,
+        });
+        
+        setIsStudentVerified(user.emailVerified);
+        
+        // Set notification preferences if they exist
+        if (user.notifications) {
+          setNotificationsEnabled(user.notifications.pushEnabled || false);
+          setEmailUpdates(user.notifications.emailUpdates || false);
+        }
+        
+        // Verify with native module if available
+        if (SwapstayNative && Platform.OS === 'ios') {
+          try {
+            const isVerified = await SwapstayNative.verifyStudent(user.email);
+            setIsStudentVerified(isVerified);
+          } catch (error) {
+            console.log('Verification not available in Expo Go');
+          }
+        }
       }
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadUserProfile();
   };
 
   const handleSettingPress = async (setting: string) => {
@@ -69,7 +138,7 @@ const ProfileScreen = () => {
     
     switch(setting) {
       case 'editProfile':
-        Alert.alert('Edit Profile', 'Profile editing coming soon!');
+        navigation.navigate('EditProfile' as never);
         break;
       case 'verification':
         Alert.alert(
@@ -103,24 +172,48 @@ const ProfileScreen = () => {
           'Are you sure you want to logout?',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Logout', style: 'destructive' },
+            { 
+              text: 'Logout', 
+              style: 'destructive',
+              onPress: async () => {
+                await apiService.logout();
+                // Navigate back to auth screen
+                // You might need to reset the navigation stack here
+              }
+            },
           ]
         );
         break;
     }
   };
 
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6366f1" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.profileHeader}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]} edges={['bottom']}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={theme.colors.primary} />
+        }
+      >
+        <View style={[styles.profileHeader, { backgroundColor: theme.colors.surface }]}>
           <Image source={{ uri: userProfile.avatar }} style={styles.avatar} />
-          <Text style={styles.userName}>{userProfile.name}</Text>
+          <Text style={[styles.userName, { color: theme.colors.onSurface }]}>{userProfile.name}</Text>
           <View style={styles.verifiedBadge}>
             <Ionicons name="shield-checkmark" size={16} color="#10b981" />
             <Text style={styles.verifiedText}>Verified Student</Text>
           </View>
-          <Text style={styles.university}>{userProfile.university}</Text>
+          <Text style={[styles.university, { color: theme.colors.onSurfaceVariant }]}>{userProfile.university}</Text>
           
           <View style={styles.stats}>
             <View style={styles.statItem}>
@@ -137,24 +230,30 @@ const ProfileScreen = () => {
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>Sep '23</Text>
+              <Text style={styles.statValue}>
+                {userProfile.memberSince ? 
+                  userProfile.memberSince.split(' ')[0].slice(0, 3) + ' \'' + 
+                  userProfile.memberSince.split(' ')[1]?.slice(2, 4) : 
+                  'New'
+                }
+              </Text>
               <Text style={styles.statLabel}>Joined</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Account</Text>
           
           <TouchableOpacity 
-            style={styles.menuItem}
+            style={[styles.menuItem, { backgroundColor: theme.colors.surface }]}
             onPress={() => handleSettingPress('editProfile')}
           >
             <View style={styles.menuItemLeft}>
-              <Ionicons name="person-outline" size={22} color="#6366f1" />
-              <Text style={styles.menuItemText}>Edit Profile</Text>
+              <Ionicons name="person-outline" size={22} color={theme.colors.primary} />
+              <Text style={[styles.menuItemText, { color: theme.colors.onSurface }]}>Edit Profile</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -206,32 +305,45 @@ const ProfileScreen = () => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={[styles.section, { backgroundColor: theme.colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Preferences</Text>
           
-          <View style={styles.menuItem}>
+          <View style={[styles.menuItem, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="notifications-outline" size={22} color="#6366f1" />
-              <Text style={styles.menuItemText}>Push Notifications</Text>
+              <Ionicons name={isDarkMode ? "moon" : "moon-outline"} size={22} color={theme.colors.primary} />
+              <Text style={[styles.menuItemText, { color: theme.colors.onSurface }]}>Dark Mode</Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: theme.colors.outline, true: theme.colors.primary }}
+              thumbColor={theme.colors.surface}
+            />
+          </View>
+          
+          <View style={[styles.menuItem, { backgroundColor: theme.colors.surface }]}>
+            <View style={styles.menuItemLeft}>
+              <Ionicons name="notifications-outline" size={22} color={theme.colors.primary} />
+              <Text style={[styles.menuItemText, { color: theme.colors.onSurface }]}>Push Notifications</Text>
             </View>
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ false: '#e0e0e0', true: '#6366f1' }}
-              thumbColor="#fff"
+              trackColor={{ false: theme.colors.outline, true: theme.colors.primary }}
+              thumbColor={theme.colors.surface}
             />
           </View>
 
-          <View style={styles.menuItem}>
+          <View style={[styles.menuItem, { backgroundColor: theme.colors.surface }]}>
             <View style={styles.menuItemLeft}>
-              <Ionicons name="mail-outline" size={22} color="#6366f1" />
-              <Text style={styles.menuItemText}>Email Updates</Text>
+              <Ionicons name="mail-outline" size={22} color={theme.colors.primary} />
+              <Text style={[styles.menuItemText, { color: theme.colors.onSurface }]}>Email Updates</Text>
             </View>
             <Switch
               value={emailUpdates}
               onValueChange={setEmailUpdates}
-              trackColor={{ false: '#e0e0e0', true: '#6366f1' }}
-              thumbColor="#fff"
+              trackColor={{ false: theme.colors.outline, true: theme.colors.primary }}
+              thumbColor={theme.colors.surface}
             />
           </View>
         </View>
@@ -424,6 +536,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 20,
     marginBottom: 30,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#6b7280',
   },
 });
 

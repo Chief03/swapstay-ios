@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
@@ -14,14 +15,17 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import AuthScreen from './src/screens/AuthScreen';
 import CreateListingScreen from './src/screens/CreateListingScreen';
 import ListingDetailScreen from './src/screens/ListingDetailScreen';
+import FilterScreen from './src/screens/FilterScreen';
+import EditProfileScreen from './src/screens/EditProfileScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-export default function App() {
+function AppContent() {
   // Set to false to skip onboarding during development
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { theme, isDarkMode } = useTheme();
 
   const handleOnboardingComplete = () => {
     setShowOnboarding(false);
@@ -36,21 +40,15 @@ export default function App() {
   };
 
   if (showOnboarding) {
-    return (
-      <SafeAreaProvider>
-        <OnboardingScreen onComplete={handleOnboardingComplete} />
-      </SafeAreaProvider>
-    );
+    return <OnboardingScreen onComplete={handleOnboardingComplete} />;
   }
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaProvider>
-        <AuthScreen 
-          onAuthenticate={handleAuthenticate} 
-          onBackToOnboarding={handleBackToOnboarding}
-        />
-      </SafeAreaProvider>
+      <AuthScreen 
+        onAuthenticate={handleAuthenticate} 
+        onBackToOnboarding={handleBackToOnboarding}
+      />
     );
   }
 
@@ -75,12 +73,16 @@ export default function App() {
 
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: '#6366f1',
-          tabBarInactiveTintColor: 'gray',
-          headerStyle: {
-            backgroundColor: '#6366f1',
+          tabBarActiveTintColor: theme.colors.primary,
+          tabBarInactiveTintColor: theme.colors.onSurfaceVariant,
+          tabBarStyle: {
+            backgroundColor: theme.colors.surface,
+            borderTopColor: theme.colors.outline,
           },
-          headerTintColor: '#fff',
+          headerStyle: {
+            backgroundColor: theme.colors.surface,
+          },
+          headerTintColor: theme.colors.onSurface,
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -95,38 +97,62 @@ export default function App() {
   }
 
   return (
+    <NavigationContainer theme={theme}>
+      <Stack.Navigator>
+        <Stack.Screen 
+          name="MainTabs" 
+          component={TabNavigator} 
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="CreateListing" 
+          component={CreateListingScreen}
+          options={{ 
+            title: 'Create Listing',
+            presentation: 'modal',
+            headerStyle: {
+              backgroundColor: theme.colors.surface,
+            },
+            headerTintColor: theme.colors.onSurface,
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        />
+        <Stack.Screen 
+          name="ListingDetail" 
+          component={ListingDetailScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="FilterScreen" 
+          component={FilterScreen}
+          options={{ 
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="EditProfile" 
+          component={EditProfileScreen}
+          options={{ 
+            presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen 
-            name="MainTabs" 
-            component={TabNavigator} 
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen 
-            name="CreateListing" 
-            component={CreateListingScreen}
-            options={{ 
-              title: 'Create Listing',
-              presentation: 'modal',
-              headerStyle: {
-                backgroundColor: '#6366f1',
-              },
-              headerTintColor: '#fff',
-              headerTitleStyle: {
-                fontWeight: 'bold',
-              },
-            }}
-          />
-          <Stack.Screen 
-            name="ListingDetail" 
-            component={ListingDetailScreen}
-            options={{ 
-              headerShown: false,
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <ThemeProvider>
+        <AppContent />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

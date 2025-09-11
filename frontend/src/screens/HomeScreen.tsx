@@ -16,6 +16,7 @@ import {
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 
 // Import our native Swift module
@@ -57,6 +58,7 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+  const { theme, isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [listings, setListings] = useState<Listing[]>([]);
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
@@ -152,83 +154,65 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       onPress={() => {
         navigation.navigate('ListingDetail', { listingId: item._id });
       }}
-      activeOpacity={0.8}
     >
       {item.photos && item.photos.length > 0 ? (
         <Image source={{ uri: item.photos[0].url }} style={styles.listingImage} />
       ) : (
         <View style={[styles.listingImage, styles.placeholderImage]}>
-          <MaterialCommunityIcons 
-            name={getPropertyIcon(item.propertyType) as any} 
-            size={50} 
-            color="#ccc" 
-          />
+          <MaterialCommunityIcons name="home" size={40} color="#ccc" />
         </View>
       )}
       
-      <View style={styles.listingBadge}>
-        <Text style={[styles.listingBadgeText, { backgroundColor: getListingTypeColor(item.listingType) }]}>
-          {item.listingType === 'BOTH' ? 'Swap or Rent' : 
-           item.listingType === 'SWAP_ONLY' ? 'Swap Only' : 'Rent Only'}
-        </Text>
-      </View>
-      
       <View style={styles.listingContent}>
-        <Text style={styles.listingTitle} numberOfLines={1}>
-          {item.title}
-        </Text>
-        
-        <View style={styles.listingLocation}>
-          <Ionicons name="location-outline" size={14} color="#666" />
-          <Text style={styles.listingLocationText} numberOfLines={1}>
-            {item.address.city}, {item.address.state} • {item.nearUniversity}
-          </Text>
+        <View style={styles.listingHeader}>
+          <View style={[styles.typeBadge, { backgroundColor: getListingTypeColor(item.listingType) }]}>
+            <Text style={styles.typeBadgeText}>{item.listingType.replace('_', ' ')}</Text>
+          </View>
+          <View style={styles.listingStats}>
+            <Ionicons name="eye-outline" size={14} color="#666" />
+            <Text style={styles.statText}>{item.views || 0}</Text>
+            <Ionicons name="heart-outline" size={14} color="#666" style={{ marginLeft: 8 }} />
+            <Text style={styles.statText}>{item.favorites || 0}</Text>
+          </View>
         </View>
+        
+        <Text style={styles.listingTitle} numberOfLines={2}>{item.title}</Text>
         
         <View style={styles.listingDetails}>
-          <View style={styles.listingDetailItem}>
-            <Ionicons name="bed-outline" size={16} color="#666" />
-            <Text style={styles.listingDetailText}>{item.bedrooms} bed</Text>
-          </View>
-          <View style={styles.listingDetailItem}>
-            <MaterialCommunityIcons name="shower" size={16} color="#666" />
-            <Text style={styles.listingDetailText}>{item.bathrooms} bath</Text>
-          </View>
-          {item.rentPrice && (
-            <View style={styles.listingDetailItem}>
-              <Text style={styles.listingPrice}>${item.rentPrice}/mo</Text>
-            </View>
-          )}
+          <MaterialCommunityIcons name={getPropertyIcon(item.propertyType)} size={16} color="#666" />
+          <Text style={styles.detailText}>{item.propertyType}</Text>
+          <Text style={styles.detailDivider}>•</Text>
+          <Ionicons name="bed-outline" size={16} color="#666" />
+          <Text style={styles.detailText}>{item.bedrooms} bed</Text>
+          <Text style={styles.detailDivider}>•</Text>
+          <Ionicons name="water-outline" size={16} color="#666" />
+          <Text style={styles.detailText}>{item.bathrooms} bath</Text>
         </View>
         
-        <View style={styles.listingDates}>
-          <Ionicons name="calendar-outline" size={14} color="#666" />
-          <Text style={styles.listingDatesText}>
-            {formatDate(item.availableFrom)} - {formatDate(item.availableTo)}
+        <View style={styles.locationRow}>
+          <Ionicons name="location-outline" size={14} color="#666" />
+          <Text style={styles.locationText}>
+            {item.address.city}, {item.address.state} • Near {item.nearUniversity}
           </Text>
         </View>
         
         <View style={styles.listingFooter}>
-          <View style={styles.listingOwner}>
-            {item.owner.profilePicture ? (
-              <Image source={{ uri: item.owner.profilePicture }} style={styles.ownerAvatar} />
-            ) : (
-              <View style={styles.ownerAvatarPlaceholder}>
-                <Text style={styles.ownerAvatarText}>
-                  {item.owner.fullName.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
-            <Text style={styles.ownerName} numberOfLines={1}>
-              {item.owner.fullName}
-            </Text>
-          </View>
-          
-          <View style={styles.listingStats}>
-            <Ionicons name="eye-outline" size={14} color="#999" />
-            <Text style={styles.listingStatText}>{item.views}</Text>
-            <Ionicons name="heart-outline" size={14} color="#999" style={{ marginLeft: 10 }} />
-            <Text style={styles.listingStatText}>{item.favorites}</Text>
+          <Text style={styles.dateText}>
+            Available {formatDate(item.availableFrom)} - {formatDate(item.availableTo)}
+          </Text>
+          {item.rentPrice && (
+            <Text style={styles.priceText}>${item.rentPrice}/mo</Text>
+          )}
+        </View>
+        
+        <View style={styles.ownerInfo}>
+          <Image 
+            source={{ uri: item.owner.profilePicture || 'https://i.pravatar.cc/100' }} 
+            style={styles.ownerAvatar}
+          />
+          <View>
+            <Text style={styles.ownerName}>{item.owner.fullName}</Text>
+            <Text style={styles.ownerUniversity}>{item.owner.university}</Text>
           </View>
         </View>
       </View>
@@ -239,17 +223,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     { id: 'swap', label: 'Swap Only', icon: 'swap-horizontal' },
     { id: 'rent', label: 'Rent Only', icon: 'cash-outline' },
     { id: 'furnished', label: 'Furnished', icon: 'bed-outline' },
-    { id: 'utilities', label: 'Utilities Inc.', icon: 'flash-outline' },
+    { id: 'parking', label: 'Parking', icon: 'car-outline' },
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
-        }
-      >
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Fixed Header Section */}
+      <View style={[styles.fixedHeader, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.outline }]}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -259,35 +239,34 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               resizeMode="contain"
             />
             <View style={styles.headerText}>
-              <Text style={styles.greeting}>Welcome back!</Text>
-              <Text style={styles.headerTitle}>Find Your Perfect Swap</Text>
+              <Text style={[styles.greeting, { color: theme.colors.onSurfaceVariant }]}>Welcome back!</Text>
+              <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Find Your Perfect Swap</Text>
             </View>
           </View>
           <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
             <View style={styles.profileButton}>
-              <Ionicons name="person-circle-outline" size={32} color="#667eea" />
+              <Ionicons name="person-circle-outline" size={32} color={theme.colors.primary} />
             </View>
           </TouchableOpacity>
         </View>
 
         {/* Search Bar */}
         <View style={styles.searchContainer}>
-          <View style={styles.searchBar}>
-            <Ionicons name="search" size={20} color="#666" />
+          <View style={[styles.searchBar, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.outline }]}>
+            <Ionicons name="search" size={20} color={theme.colors.onSurfaceVariant} />
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: theme.colors.onSurface }]}
               placeholder="Search by city, university, or keyword..."
-              placeholderTextColor="#999"
+              placeholderTextColor={theme.colors.onSurfaceVariant}
               value={searchQuery}
               onChangeText={setSearchQuery}
               onSubmitEditing={handleSearch}
             />
           </View>
-          <TouchableOpacity style={styles.filterButton} onPress={() => {
-            // TODO: Implement filter modal or navigate to filter screen
-            Alert.alert('Filters', 'Filter functionality coming soon!');
+          <TouchableOpacity style={[styles.filterButton, { backgroundColor: theme.colors.surfaceVariant }]} onPress={() => {
+            navigation.navigate('FilterScreen' as never, { filters: {} });
           }}>
-            <Ionicons name="options-outline" size={24} color="#667eea" />
+            <Ionicons name="options-outline" size={24} color={theme.colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -322,7 +301,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             </TouchableOpacity>
           ))}
         </ScrollView>
+      </View>
 
+      {/* Scrollable Content */}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
+        style={styles.scrollContent}
+        contentContainerStyle={styles.scrollContentContainer}
+      >
         {/* Featured Section */}
         {featuredListings.length > 0 && (
           <View style={styles.section}>
@@ -349,15 +338,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                       {listing.title}
                     </Text>
                     <Text style={styles.featuredLocation}>
-                      {listing.nearUniversity}
+                      {listing.address.city}, {listing.address.state}
                     </Text>
                     <View style={styles.featuredDetails}>
                       <Text style={styles.featuredDetail}>
-                        {listing.bedrooms} bed • {listing.bathrooms} bath
+                        {listing.propertyType} • {listing.bedrooms} bed
                       </Text>
-                      {listing.rentPrice && (
-                        <Text style={styles.featuredPrice}>${listing.rentPrice}/mo</Text>
-                      )}
                     </View>
                   </LinearGradient>
                 </TouchableOpacity>
@@ -371,13 +357,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Listings</Text>
             <TouchableOpacity onPress={() => {
-              // TODO: Navigate to AllListings when screen is created
-              Alert.alert('Coming Soon', 'All listings view will be available soon!');
+              Alert.alert('All Listings', 'All listings view coming soon!');
             }}>
               <Text style={styles.seeAll}>See All</Text>
             </TouchableOpacity>
           </View>
-          
+
           {isLoading ? (
             <ActivityIndicator size="large" color="#667eea" style={styles.loader} />
           ) : listings.length > 0 ? (
@@ -386,28 +371,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
               renderItem={renderListingCard}
               keyExtractor={(item) => item._id}
               scrollEnabled={false}
-              contentContainerStyle={styles.listingsContainer}
+              showsVerticalScrollIndicator={false}
             />
           ) : (
             <View style={styles.emptyState}>
-              <MaterialCommunityIcons name="home-search-outline" size={64} color="#ccc" />
-              <Text style={styles.emptyStateTitle}>No Listings Yet</Text>
-              <Text style={styles.emptyStateText}>
-                Be the first to create a listing in your area!
-              </Text>
+              <MaterialCommunityIcons name="home-search" size={64} color="#ccc" />
+              <Text style={styles.emptyTitle}>No Listings Yet</Text>
+              <Text style={styles.emptyText}>Be the first to create a listing in your area!</Text>
               <TouchableOpacity
-                style={styles.createListingButton}
-                onPress={() => navigation.navigate('CreateListing')}
+                style={styles.createButton}
+                onPress={() => navigation.navigate('CreateListing' as never)}
               >
-                <LinearGradient
-                  colors={['#667eea', '#764ba2']}
-                  style={styles.createListingGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <Ionicons name="add-circle-outline" size={20} color="#fff" />
-                  <Text style={styles.createListingText}>Create Listing</Text>
-                </LinearGradient>
+                <Ionicons name="add-circle-outline" size={24} color="#fff" />
+                <Text style={styles.createButtonText}>Create Listing</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -417,17 +393,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
       {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => navigation.navigate('CreateListing')}
-        activeOpacity={0.8}
+        onPress={() => navigation.navigate('CreateListing' as never)}
       >
-        <LinearGradient
-          colors={['#667eea', '#764ba2']}
-          style={styles.fabGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        >
-          <Ionicons name="add" size={28} color="#fff" />
-        </LinearGradient>
+        <Ionicons name="add" size={28} color="#fff" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -436,15 +404,33 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#f5f5f5',
+  },
+  fixedHeader: {
+    backgroundColor: '#fff',
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 5,
+    zIndex: 100,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingBottom: 20,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingTop: 15,
+    paddingBottom: 10,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -454,7 +440,6 @@ const styles = StyleSheet.create({
   headerLogo: {
     width: 40,
     height: 40,
-    borderRadius: 8,
     marginRight: 12,
   },
   headerText: {
@@ -463,12 +448,12 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 2,
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginTop: 4,
   },
   profileButton: {
     padding: 5,
@@ -476,77 +461,68 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    marginBottom: 15,
+    paddingBottom: 10,
   },
   searchBar: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f8f8',
     borderRadius: 12,
     paddingHorizontal: 15,
-    paddingVertical: 12,
+    height: 45,
     marginRight: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   searchInput: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 16,
+    fontSize: 15,
     color: '#333',
   },
   filterButton: {
-    backgroundColor: '#fff',
+    width: 45,
+    height: 45,
     borderRadius: 12,
-    width: 48,
-    height: 48,
+    backgroundColor: '#f8f8f8',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
   filtersContainer: {
     paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingBottom: 5,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0ff',
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#667eea',
+    borderColor: '#e0e0ff',
   },
   filterChipActive: {
     backgroundColor: '#667eea',
+    borderColor: '#667eea',
   },
   filterChipText: {
+    marginLeft: 5,
     fontSize: 14,
     color: '#667eea',
-    marginLeft: 5,
     fontWeight: '500',
   },
   filterChipTextActive: {
     color: '#fff',
   },
   section: {
-    marginBottom: 25,
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     marginBottom: 15,
   },
   sectionTitle: {
@@ -560,210 +536,183 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   featuredCard: {
-    width: 250,
-    height: 140,
-    marginLeft: 20,
-    borderRadius: 15,
-    overflow: 'hidden',
+    width: 280,
+    marginRight: 15,
   },
   featuredGradient: {
-    flex: 1,
-    padding: 15,
+    borderRadius: 16,
+    padding: 20,
+    height: 140,
     justifyContent: 'space-between',
   },
   featuredTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 8,
   },
   featuredLocation: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
-    marginTop: 5,
+    marginBottom: 10,
   },
   featuredDetails: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   featuredDetail: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
   },
-  featuredPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  listingsContainer: {
-    paddingHorizontal: 20,
-  },
   listingCard: {
     backgroundColor: '#fff',
-    borderRadius: 15,
+    borderRadius: 16,
     marginBottom: 15,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 4,
-    elevation: 2,
-    overflow: 'hidden',
+    elevation: 3,
   },
   listingImage: {
     width: '100%',
     height: 180,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f5f5f5',
   },
   placeholderImage: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  listingBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  listingBadgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 20,
-  },
   listingContent: {
     padding: 15,
   },
-  listingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  listingLocation: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  listingLocationText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    flex: 1,
-  },
-  listingDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  listingDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  listingDetailText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-  },
-  listingPrice: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#667eea',
-  },
-  listingDates: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  listingDatesText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-  },
-  listingFooter: {
+  listingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    paddingTop: 12,
+    marginBottom: 10,
   },
-  listingOwner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  typeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
-  ownerAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  ownerAvatarPlaceholder: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#667eea',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  ownerAvatarText: {
-    fontSize: 12,
-    fontWeight: 'bold',
+  typeBadgeText: {
+    fontSize: 11,
     color: '#fff',
-  },
-  ownerName: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   listingStats: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  listingStatText: {
+  statText: {
     fontSize: 12,
-    color: '#999',
+    color: '#666',
+    marginLeft: 3,
+  },
+  listingTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  listingDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  detailText: {
+    fontSize: 13,
+    color: '#666',
     marginLeft: 4,
   },
-  loader: {
-    paddingVertical: 50,
+  detailDivider: {
+    marginHorizontal: 8,
+    color: '#ccc',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  locationText: {
+    fontSize: 13,
+    color: '#666',
+    marginLeft: 4,
+    flex: 1,
+  },
+  listingFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  dateText: {
+    fontSize: 12,
+    color: '#999',
+  },
+  priceText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#667eea',
+  },
+  ownerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ownerAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 10,
+  },
+  ownerName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#333',
+  },
+  ownerUniversity: {
+    fontSize: 11,
+    color: '#999',
   },
   emptyState: {
     alignItems: 'center',
-    paddingVertical: 50,
-    paddingHorizontal: 20,
+    paddingVertical: 60,
   },
-  emptyStateTitle: {
-    fontSize: 18,
+  emptyTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
-    marginTop: 15,
+    marginTop: 20,
+    marginBottom: 10,
   },
-  emptyStateText: {
+  emptyText: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 30,
   },
-  createListingButton: {
-    borderRadius: 25,
-    overflow: 'hidden',
-  },
-  createListingGradient: {
+  createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    backgroundColor: '#667eea',
+    paddingHorizontal: 24,
     paddingVertical: 12,
+    borderRadius: 25,
   },
-  createListingText: {
+  createButtonText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff',
     marginLeft: 8,
+  },
+  loader: {
+    marginTop: 50,
   },
   fab: {
     position: 'absolute',
@@ -772,17 +721,14 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    overflow: 'hidden',
-    shadowColor: '#667eea',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabGradient: {
-    flex: 1,
+    backgroundColor: '#667eea',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
   },
 });
 
