@@ -26,7 +26,7 @@ swapstay/
 └── README.md            # You are here!
 ```
 
-## 🚀 Current State (As of Sep 9, 2025 - 8:00 PM)
+## 🚀 Current State (As of Sep 12, 2025 - 10:58 PM)
 
 ### ✅ Completed Features
 
@@ -67,11 +67,30 @@ swapstay/
    - Floating Action Button for listing creation
    - Empty state with call-to-action
 
-5. **Main App Navigation**
+5. **Working Filter System** ✨ **NEW!**
+   - Functional "Swap Only" and "Rent Only" filter chips
+   - Smart filtering that includes BOTH listings in specific filters
+   - Real-time loading states and filter persistence
+   - Filter state management with visual feedback
+   - Clear filter functionality
+
+6. **Enhanced Dark Mode** ✨ **IMPROVED!**
+   - Significantly improved text contrast and readability
+   - Better color scheme with proper slate-based palette
+   - Enhanced background, surface, and text colors
+   - Smooth theme switching with persistent preferences
+
+7. **Featured Listings Carousel** ✨ **NEW!**
+   - Horizontal scrolling featured properties section
+   - Sample data populated for testing
+   - Resolved empty space issue in home screen layout
+   - Enhanced property discoverability
+
+8. **Main App Navigation**
    - Bottom tab navigation (Home, Search, Messages, Profile)
    - Navigation to CreateListing screen
 
-6. **Native iOS Module (Swift)**
+9. **Native iOS Module (Swift)**
    - Student email verification
    - Haptic feedback
    - Device info retrieval
@@ -105,10 +124,21 @@ swapstay/
   - University-specific listings
 - ✨ **Advanced Features:**
   - Pagination support
-  - Multiple filter options
+  - Smart filter options (includes BOTH listings)
   - Search functionality
   - View and favorite tracking
   - Owner verification
+
+**User Profile System:** ✨ **NEW!**
+- ✨ **User Management Endpoints:**
+  - GET /api/v1/users/me (get current user profile)
+  - PUT /api/v1/users/me (update user profile)
+  - Flexible authentication middleware for profiles
+  - Support for unverified users accessing profiles
+- ✨ **Profile Features:**
+  - Complete user data access
+  - Profile update functionality
+  - Proper error handling and validation
 
 #### Shared Resources
 - TypeScript types for User, Listing, Swap, Message
@@ -185,7 +215,18 @@ Password: password123
 
 ## 🔄 Last Working Session Context
 
-**Latest Updates (Sep 11, 2025 - 2:15 PM):**
+**Latest Updates (Sep 12, 2025 - 10:58 PM):**
+- ✅ **ENHANCED DARK MODE & WORKING FILTERS**
+  - Significantly improved dark mode text contrast and readability
+  - Implemented fully functional filter system (Swap Only, Rent Only)
+  - Enhanced backend filtering to include BOTH listings intelligently
+  - Added missing /api/v1/users/me endpoint for profile management
+  - Fixed ProfileScreen JSON parse errors and API communication
+  - Populated featured listings carousel (resolved empty space issue)
+  - Added proper loading states and filter persistence
+  - Enhanced authentication middleware for user profiles
+
+**Previous Updates (Sep 11, 2025 - 2:15 PM):**
 - ✅ **BUG FIXES & STABILITY IMPROVEMENTS**
   - Fixed ListingDetail crash (added null checks for swapPreferences)
   - Fixed Filter button navigation error (added placeholder)
@@ -326,6 +367,6 @@ The architecture allows for:
 
 ---
 
-**Last Updated:** September 11, 2025, 2:15 PM
-**Status:** 🚀 Stable marketplace platform ready for testing!
-**Achievement:** Complete housing exchange marketplace with bug fixes, mobile testing support, and professional branding!
+**Last Updated:** September 12, 2025, 10:58 PM
+**Status:** 🎨 Enhanced marketplace with working filters & improved UX!
+**Achievement:** Fully functional filtering system, enhanced dark mode, user profile management, and populated featured listings carousel!
