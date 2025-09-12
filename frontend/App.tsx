@@ -17,6 +17,7 @@ import CreateListingScreen from './src/screens/CreateListingScreen';
 import ListingDetailScreen from './src/screens/ListingDetailScreen';
 import FilterScreen from './src/screens/FilterScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
+import ChatScreen from './src/screens/ChatScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -139,6 +140,13 @@ function AppContent() {
           component={EditProfileScreen}
           options={{ 
             presentation: 'modal',
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="Chat" 
+          component={ChatScreen}
+          options={{ 
             headerShown: false,
           }}
         />

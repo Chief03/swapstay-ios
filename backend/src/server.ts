@@ -1,11 +1,15 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import connectDB from './config/database';
 import authRoutes from './routes/authRoutes';
 import listingRoutes from './routes/listingRoutes';
 import userRoutes from './routes/userRoutes';
 import wishlistRoutes from './routes/wishlistRoutes';
+import messageRoutes from './routes/messageRoutes';
+import SocketHandler from './socket/socketHandler';
 
 // Load environment variables
 dotenv.config();
@@ -14,7 +18,19 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:8081',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
 const PORT = process.env.PORT || 5000;
+
+// Initialize Socket.io handler
+new SocketHandler(io);
 
 // Middleware
 app.use(cors({
@@ -48,6 +64,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/wishlist', wishlistRoutes);
+app.use('/api/v1/messages', messageRoutes);
 
 app.get('/api/v1', (req, res) => {
   res.json({
@@ -71,9 +88,19 @@ app.get('/api/v1', (req, res) => {
         getUserListings: 'GET /api/v1/listings/user/:userId (auth required)',
         toggleFavorite: 'POST /api/v1/listings/:id/favorite (auth required)'
       },
-      users: '/api/v1/users (coming soon)',
-      swaps: '/api/v1/swaps (coming soon)',
-      messages: '/api/v1/messages (coming soon)'
+      users: {
+        me: 'GET /api/v1/users/me (auth required)',
+        updateProfile: 'PUT /api/v1/users/me (auth required)'
+      },
+      messages: {
+        getConversations: 'GET /api/v1/messages/conversations (auth required)',
+        createConversation: 'POST /api/v1/messages/conversations (auth required)',
+        getMessages: 'GET /api/v1/messages/conversations/:id/messages (auth required)',
+        sendMessage: 'POST /api/v1/messages/conversations/:id/messages (auth required)',
+        markAsRead: 'PUT /api/v1/messages/conversations/:id/read (auth required)',
+        getUnreadCount: 'GET /api/v1/messages/unread-count (auth required)'
+      },
+      swaps: '/api/v1/swaps (coming soon)'
     }
   });
 });
@@ -87,9 +114,13 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
   });
 });
 
+// Export io instance for use in other modules
+export { io };
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 SwapStay Backend running on port ${PORT}`);
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📍 API endpoints: http://localhost:${PORT}/api/v1`);
+  console.log(`🔌 WebSocket server ready for connections`);
 });

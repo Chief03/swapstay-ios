@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
+import messagingService from '../services/messaging';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -252,6 +253,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboard
             [{ text: 'OK', onPress: () => setIsLogin(true) }]
           );
         } else {
+          // Initialize messaging service after successful login
+          messagingService.initialize();
           onAuthenticate();
         }
       } else {

@@ -142,8 +142,16 @@ const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, r
   };
 
   const handleContactOwner = () => {
-    // TODO: Navigate to messages screen with owner
-    Alert.alert('Coming Soon', 'Messaging feature will be available soon!');
+    if (!listing.owner) {
+      Alert.alert('Error', 'Owner information not available');
+      return;
+    }
+
+    // Navigate to chat screen with the listing owner
+    navigation.navigate('Chat', {
+      recipient: listing.owner,
+      listing: listing
+    });
   };
 
   const handleRequestSwap = () => {
