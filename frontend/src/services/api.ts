@@ -140,6 +140,23 @@ class ApiService {
     });
   }
 
+  async updateUser(userData: {
+    fullName?: string;
+    bio?: string;
+    yearInSchool?: string;
+    major?: string;
+    profilePicture?: string;
+  }): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+    
+    return this.request('/users/me', {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    });
+  }
+
   // Listing methods
   async getListings(params?: {
     city?: string;
@@ -149,6 +166,7 @@ class ApiService {
     propertyType?: string;
     minPrice?: number;
     maxPrice?: number;
+    amenities?: string | string[];
     page?: number;
     limit?: number;
   }): Promise<ApiResponse> {
@@ -228,6 +246,57 @@ class ApiService {
 
     const endpoint = userId ? `/listings/user/${userId}` : '/listings/user';
     return this.request(endpoint, {
+      method: 'GET',
+    });
+  }
+
+  // Wishlist methods
+  async getSavedListings(): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request('/wishlist', {
+      method: 'GET',
+    });
+  }
+
+  async addToWishlist(listingId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/wishlist/${listingId}`, {
+      method: 'POST',
+    });
+  }
+
+  async removeFromWishlist(listingId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/wishlist/${listingId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async toggleWishlist(listingId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/wishlist/toggle/${listingId}`, {
+      method: 'POST',
+    });
+  }
+
+  async isListingSaved(listingId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/wishlist/check/${listingId}`, {
       method: 'GET',
     });
   }

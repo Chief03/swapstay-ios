@@ -5,6 +5,7 @@ import connectDB from './config/database';
 import authRoutes from './routes/authRoutes';
 import listingRoutes from './routes/listingRoutes';
 import userRoutes from './routes/userRoutes';
+import wishlistRoutes from './routes/wishlistRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +47,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/wishlist', wishlistRoutes);
 
 app.get('/api/v1', (req, res) => {
   res.json({

@@ -49,6 +49,7 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
       bedrooms,
       availableFrom,
       availableTo,
+      amenities,
       status = 'ACTIVE',
       page = 1,
       limit = 20,
@@ -86,6 +87,16 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
     
     if (availableTo) {
       query.availableTo = { $gte: new Date(availableTo as string) };
+    }
+    
+    // Handle amenities filter
+    if (amenities) {
+      // amenities can be a single string or array of strings
+      const amenityList = Array.isArray(amenities) ? amenities : [amenities];
+      // Build query for amenities (they're stored as boolean properties)
+      amenityList.forEach((amenity: any) => {
+        query[`amenities.${String(amenity)}`] = true;
+      });
     }
     
     const pageNum = parseInt(page as string);
@@ -381,8 +392,8 @@ export const searchListings = async (req: Request, res: Response): Promise<void>
     
     // Amenities filter (must have all specified amenities)
     if (amenities && amenities.length > 0) {
-      amenities.forEach((amenity: string) => {
-        query[`amenities.${amenity}`] = true;
+      amenities.forEach((amenity: any) => {
+        query[`amenities.${String(amenity)}`] = true;
       });
     }
     

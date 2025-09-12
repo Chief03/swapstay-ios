@@ -19,6 +19,7 @@ import {
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -143,6 +144,7 @@ const POPULAR_UNIVERSITIES = [
 ];
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onAuthenticate, onBackToOnboarding }) => {
+  const { theme, isDarkMode } = useTheme();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

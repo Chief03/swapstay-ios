@@ -8,7 +8,7 @@ import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreen';
-import SearchScreen from './src/screens/SearchScreen';
+import WishlistScreen from './src/screens/WishlistScreen';
 import MessagesScreen from './src/screens/MessagesScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -61,8 +61,8 @@ function AppContent() {
 
             if (route.name === 'Home') {
               iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Search') {
-              iconName = focused ? 'search' : 'search-outline';
+            } else if (route.name === 'Wishlist') {
+              iconName = focused ? 'heart' : 'heart-outline';
             } else if (route.name === 'Messages') {
               iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
             } else if (route.name === 'Profile') {
@@ -89,7 +89,7 @@ function AppContent() {
         })}
       >
         <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'SwapStay' }} />
-        <Tab.Screen name="Search" component={SearchScreen} />
+        <Tab.Screen name="Wishlist" component={WishlistScreen} />
         <Tab.Screen name="Messages" component={MessagesScreen} />
         <Tab.Screen name="Profile" component={ProfileScreen} />
       </Tab.Navigator>
@@ -127,7 +127,7 @@ function AppContent() {
           }}
         />
         <Stack.Screen 
-          name="FilterScreen" 
+          name="Filter" 
           component={FilterScreen}
           options={{ 
             presentation: 'modal',

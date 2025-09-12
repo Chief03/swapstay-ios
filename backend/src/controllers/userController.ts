@@ -29,16 +29,23 @@ export const updateCurrentUser = async (req: AuthRequest, res: Response) => {
   try {
     const { fullName, bio, yearInSchool, major, profilePicture } = req.body;
     
+    console.log('Update user request:', {
+      userId: req.user?._id,
+      body: req.body
+    });
+    
+    // Only update fields that are provided
+    const updateFields: any = {};
+    if (fullName !== undefined) updateFields.fullName = fullName;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (yearInSchool !== undefined) updateFields.yearInSchool = yearInSchool;
+    if (major !== undefined) updateFields.major = major;
+    if (profilePicture !== undefined) updateFields.profilePicture = profilePicture;
+    updateFields.updatedAt = new Date();
+    
     const user = await User.findByIdAndUpdate(
-      req.user?.userId,
-      { 
-        fullName,
-        bio,
-        yearInSchool,
-        major,
-        profilePicture,
-        updatedAt: new Date()
-      },
+      req.user?._id,
+      updateFields,
       { new: true, select: '-password' }
     );
 
@@ -48,6 +55,8 @@ export const updateCurrentUser = async (req: AuthRequest, res: Response) => {
         message: 'User not found'
       });
     }
+
+    console.log('User updated successfully:', user._id);
 
     res.json({
       success: true,

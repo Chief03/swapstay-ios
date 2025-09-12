@@ -18,6 +18,10 @@ export interface IUser extends Document {
   major?: string;
   listings?: mongoose.Types.ObjectId[];
   swaps?: mongoose.Types.ObjectId[];
+  savedListings?: Array<{
+    listing: mongoose.Types.ObjectId;
+    savedAt: Date;
+  }>;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -108,6 +112,17 @@ const userSchema = new Schema<IUser>(
     swaps: [{
       type: Schema.Types.ObjectId,
       ref: 'Swap'
+    }],
+    savedListings: [{
+      listing: {
+        type: Schema.Types.ObjectId,
+        ref: 'Listing',
+        required: true
+      },
+      savedAt: {
+        type: Date,
+        default: Date.now
+      }
     }]
   },
   {
