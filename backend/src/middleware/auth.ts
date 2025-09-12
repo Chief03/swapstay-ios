@@ -80,3 +80,44 @@ export const optionalAuth = async (
     next();
   }
 };
+
+export const authenticateUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'No authentication token provided' 
+      });
+      return;
+    }
+    
+    const decoded = verifyToken(token);
+    const user = await User.findById(decoded.userId).select('-password');
+    
+    if (!user) {
+      res.status(401).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+      return;
+    }
+    
+    // Allow access even if email is not verified for profile endpoint
+    req.user = user;
+    next();
+    
+  } catch (error: any) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ 
+      success: false, 
+      message: 'Invalid token',
+      error: error.message 
+    });
+  }
+};

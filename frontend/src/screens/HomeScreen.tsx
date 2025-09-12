@@ -76,9 +76,28 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     }
   }, []);
 
-  const loadListings = async () => {
+  const loadListings = async (filterType?: string) => {
     try {
-      const response = await apiService.getListings({ limit: 10 });
+      const params: any = { limit: 10 };
+      
+      // Apply filter based on selected filter type
+      // Note: We don't include BOTH listings in specific filters because
+      // the backend listingType filter is exact match only
+      if (filterType === 'swap') {
+        params.listingType = 'SWAP_ONLY';
+      } else if (filterType === 'rent') {
+        params.listingType = 'RENT_ONLY';
+      }
+      // For 'furnished' and 'parking', we'll need to extend the backend to support these filters
+      // For now, just log them
+      if (filterType === 'furnished') {
+        console.log('Furnished filter selected - backend support needed');
+      }
+      if (filterType === 'parking') {
+        console.log('Parking filter selected - backend support needed');
+      }
+      
+      const response = await apiService.getListings(params);
       if (response.success) {
         setListings(response.listings);
       }
@@ -102,7 +121,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([loadListings(), loadFeaturedListings()]);
+    await Promise.all([loadListings(selectedFilter || undefined), loadFeaturedListings()]);
     setIsRefreshing(false);
   };
 
@@ -118,8 +137,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const handleFilterPress = (filter: string) => {
-    setSelectedFilter(filter === selectedFilter ? null : filter);
-    // Apply filter logic here
+    const newFilter = filter === selectedFilter ? null : filter;
+    setSelectedFilter(newFilter);
+    setIsLoading(true);
+    loadListings(newFilter || undefined);
   };
 
   const formatDate = (dateString: string) => {

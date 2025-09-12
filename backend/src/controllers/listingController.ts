@@ -61,7 +61,16 @@ export const getListings = async (req: Request, res: Response): Promise<void> =>
     if (city) query['address.city'] = new RegExp(city as string, 'i');
     if (state) query['address.state'] = state;
     if (nearUniversity) query.nearUniversity = new RegExp(nearUniversity as string, 'i');
-    if (listingType) query.listingType = listingType;
+    if (listingType) {
+      // Include BOTH listings when filtering for specific types
+      if (listingType === 'SWAP_ONLY') {
+        query.listingType = { $in: ['SWAP_ONLY', 'BOTH'] };
+      } else if (listingType === 'RENT_ONLY') {
+        query.listingType = { $in: ['RENT_ONLY', 'BOTH'] };
+      } else {
+        query.listingType = listingType;
+      }
+    }
     if (propertyType) query.propertyType = propertyType;
     if (bedrooms) query.bedrooms = parseInt(bedrooms as string);
     
