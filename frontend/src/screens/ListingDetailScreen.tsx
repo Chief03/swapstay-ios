@@ -4,109 +4,224 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
+  Image,
+  FlatList,
   Dimensions,
   Alert,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 interface ListingDetailScreenProps {
   navigation: any;
   route: any;
 }
 
+interface Listing {
+  _id: string;
+  title: string;
+  description: string;
+  listingType: string;
+  propertyType: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  };
+  nearUniversity: string;
+  distanceToCampus?: number;
+  bedrooms: number;
+  bathrooms: number;
+  squareFeet?: number;
+  availableFrom: string;
+  availableTo: string;
+  flexibleDates: boolean;
+  minimumStay: number;
+  rentPrice?: number;
+  securityDeposit?: number;
+  utilitiesIncluded: boolean;
+  amenities: {
+    wifi?: boolean;
+    parking?: boolean;
+    laundry?: boolean;
+    airConditioning?: boolean;
+    heating?: boolean;
+    furnished?: boolean;
+    petFriendly?: boolean;
+    kitchen?: boolean;
+    gym?: boolean;
+    pool?: boolean;
+  };
+  houseRules?: {
+    smokingAllowed?: boolean;
+    petsAllowed?: boolean;
+    guestsAllowed?: boolean;
+    quietHours?: string;
+  };
+  photos: Array<{ url: string; caption?: string }>;
+  owner: {
+    _id: string;
+    fullName: string;
+    email: string;
+    university: string;
+    profilePicture?: string;
+    bio?: string;
+    yearInSchool?: string;
+    major?: string;
+  };
+  views: number;
+  favorites: number;
+}
+
 const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, route }) => {
+  const { theme, isDarkMode } = useTheme();
   const { listingId } = route.params;
-  const [listing, setListing] = useState<any>(null);
+  
+  const [listing, setListing] = useState<Listing | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isSaved, setIsSaved] = useState(false);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
 
   useEffect(() => {
-    loadListingDetails();
+    loadListing();
+    checkIfSaved();
   }, [listingId]);
 
-  const loadListingDetails = async () => {
+  const loadListing = async () => {
     try {
       const response = await apiService.getListingById(listingId);
-      if (response.success) {
+      if (response.success && response.listing) {
         setListing(response.listing);
-        setIsFavorited(response.listing.isFavorited || false);
+      } else {
+        Alert.alert('Error', 'Failed to load listing');
+        navigation.goBack();
       }
     } catch (error) {
-      console.error('Error loading listing details:', error);
-      Alert.alert('Error', 'Failed to load listing details');
+      console.error('Load listing error:', error);
+      Alert.alert('Error', 'Failed to load listing');
+      navigation.goBack();
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleToggleFavorite = async () => {
-    setIsFavorited(!isFavorited);
-    // TODO: Implement API call to toggle favorite
+  const checkIfSaved = async () => {
+    try {
+      const response = await apiService.isListingSaved(listingId);
+      if (response.success) {
+        setIsSaved(response.isSaved);
+      }
+    } catch (error) {
+      console.log('Check saved error:', error);
+    }
+  };
+
+  const handleToggleSave = async () => {
+    try {
+      const response = await apiService.toggleWishlist(listingId);
+      if (response.success) {
+        setIsSaved(response.isSaved);
+        Alert.alert(
+          'Success',
+          response.isSaved ? 'Added to wishlist' : 'Removed from wishlist'
+        );
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update wishlist');
+    }
   };
 
   const handleContactOwner = () => {
-    // Navigate to messages screen with owner info
-    navigation.navigate('Messages', { 
-      ownerId: listing.owner._id,
-      ownerName: listing.owner.fullName,
-      listingTitle: listing.title 
-    });
+    // TODO: Navigate to messages screen with owner
+    Alert.alert('Coming Soon', 'Messaging feature will be available soon!');
   };
 
-  const handleReportListing = () => {
-    Alert.alert(
-      'Report Listing',
-      'Why are you reporting this listing?',
-      [
-        { text: 'Inappropriate content', onPress: () => reportListing('inappropriate') },
-        { text: 'Scam or fraud', onPress: () => reportListing('scam') },
-        { text: 'Incorrect information', onPress: () => reportListing('incorrect') },
-        { text: 'Cancel', style: 'cancel' }
-      ]
-    );
+  const handleRequestSwap = () => {
+    // TODO: Implement swap request
+    Alert.alert('Coming Soon', 'Swap request feature will be available soon!');
   };
 
-  const reportListing = async (reason: string) => {
-    // TODO: Implement API call to report listing
-    Alert.alert('Reported', 'Thank you for your report. We will review this listing.');
+  const handleShare = () => {
+    // TODO: Implement share functionality
+    Alert.alert('Share', 'Share functionality coming soon!');
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-US', { 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
       month: 'short', 
       day: 'numeric',
       year: 'numeric'
     });
   };
 
-  const getPropertyTypeIcon = (type: string) => {
+  const getListingTypeColor = (type: string) => {
     switch (type) {
-      case 'APARTMENT': return 'home-city';
-      case 'HOUSE': return 'home';
-      case 'DORM': return 'domain';
-      case 'STUDIO': return 'home-floor-0';
-      case 'CONDO': return 'home-modern';
-      case 'TOWNHOUSE': return 'home-group';
-      default: return 'home';
+      case 'SWAP_ONLY': return '#10B981';
+      case 'RENT_ONLY': return '#3B82F6';
+      case 'BOTH': return theme.colors.primary;
+      default: return theme.colors.primary;
     }
   };
+
+  const renderAmenity = (icon: string, label: string, available: boolean) => {
+    if (!available) return null;
+    
+    return (
+      <View key={label} style={styles.amenityItem}>
+        <MaterialCommunityIcons 
+          name={icon as any} 
+          size={24} 
+          color={theme.colors.primary} 
+        />
+        <Text style={styles.amenityLabel}>{label}</Text>
+      </View>
+    );
+  };
+
+  const renderPhoto = ({ item, index }: { item: { url: string; caption?: string }, index: number }) => {
+    // Handle local file URLs for testing
+    const isLocalFile = item.url.startsWith('file://');
+    
+    return (
+      <View style={styles.photoContainer}>
+        {isLocalFile ? (
+          <View style={styles.placeholderPhoto}>
+            <MaterialCommunityIcons 
+              name="image-off" 
+              size={48} 
+              color={theme.colors.onSurfaceVariant} 
+            />
+            <Text style={styles.placeholderText}>Photo {index + 1}</Text>
+          </View>
+        ) : (
+          <Image 
+            source={{ uri: item.url }} 
+            style={styles.photo}
+            resizeMode="cover"
+          />
+        )}
+      </View>
+    );
+  };
+
+  const styles = createStyles(theme, isDarkMode);
 
   if (isLoading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#667eea" />
-          <Text style={styles.loadingText}>Loading listing details...</Text>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
         </View>
       </SafeAreaView>
     );
@@ -116,76 +231,74 @@ const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, r
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <MaterialCommunityIcons name="alert-circle-outline" size={60} color="#999" />
           <Text style={styles.errorText}>Listing not found</Text>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backButtonText}>Go Back</Text>
-          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  const defaultImages = [
-    { uri: 'https://via.placeholder.com/400x300/667eea/ffffff?text=SwapStay' }
-  ];
-  const images = listing.photos?.length > 0 ? listing.photos : defaultImages;
-
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-        {/* Image Gallery */}
-        <View style={styles.imageContainer}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={(event) => {
-              const index = Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setActiveImageIndex(index);
-            }}
-            scrollEventThrottle={16}
-          >
-            {images.map((image: any, index: number) => (
-              <Image
-                key={index}
-                source={{ uri: image.uri || image }}
-                style={styles.image}
-                resizeMode="cover"
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Photo Gallery */}
+        <View style={styles.gallery}>
+          {listing.photos && listing.photos.length > 0 ? (
+            <>
+              <FlatList
+                data={listing.photos}
+                renderItem={renderPhoto}
+                keyExtractor={(item, index) => index.toString()}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={(event) => {
+                  const index = Math.floor(event.nativeEvent.contentOffset.x / screenWidth);
+                  setActivePhotoIndex(index);
+                }}
               />
-            ))}
-          </ScrollView>
-          
-          {/* Image Indicators */}
-          {images.length > 1 && (
-            <View style={styles.imageIndicatorContainer}>
-              {images.map((_: any, index: number) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.imageIndicator,
-                    index === activeImageIndex && styles.imageIndicatorActive
-                  ]}
-                />
-              ))}
+              {listing.photos.length > 1 && (
+                <View style={styles.photoIndicator}>
+                  <Text style={styles.photoIndicatorText}>
+                    {activePhotoIndex + 1} / {listing.photos.length}
+                  </Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.noPhotoContainer}>
+              <MaterialCommunityIcons 
+                name="image-off" 
+                size={64} 
+                color={theme.colors.onSurfaceVariant} 
+              />
+              <Text style={styles.noPhotoText}>No photos available</Text>
             </View>
           )}
-
-          {/* Header Actions */}
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
-              <Ionicons name="arrow-back" size={24} color="#333" />
+          
+          {/* Action Buttons Overlay */}
+          <View style={styles.photoActions}>
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
-            <View style={styles.headerRightActions}>
-              <TouchableOpacity style={styles.headerButton} onPress={handleToggleFavorite}>
-                <Ionicons 
-                  name={isFavorited ? "heart" : "heart-outline"} 
-                  size={24} 
-                  color={isFavorited ? "#e74c3c" : "#333"} 
-                />
+            <View style={styles.rightActions}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={handleShare}
+              >
+                <Ionicons name="share-outline" size={24} color="#fff" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.headerButton} onPress={() => {}}>
-                <Ionicons name="share-outline" size={24} color="#333" />
+              <TouchableOpacity 
+                style={[styles.actionButton, { marginLeft: 10 }]}
+                onPress={handleToggleSave}
+              >
+                <Ionicons 
+                  name={isSaved ? "heart" : "heart-outline"} 
+                  size={24} 
+                  color={isSaved ? "#FF4458" : "#fff"} 
+                />
               </TouchableOpacity>
             </View>
           </View>
@@ -193,738 +306,628 @@ const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, r
 
         {/* Content */}
         <View style={styles.content}>
-          {/* Title and Type Badge */}
-          <View style={styles.titleSection}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title}>{listing.title}</Text>
-              <View style={[
-                styles.typeBadge,
-                listing.listingType === 'SWAP_ONLY' && styles.swapBadge,
-                listing.listingType === 'RENT_ONLY' && styles.rentBadge,
-                listing.listingType === 'BOTH' && styles.bothBadge,
-              ]}>
-                <Text style={styles.typeBadgeText}>
-                  {listing.listingType === 'BOTH' ? 'Swap or Rent' : 
-                   listing.listingType === 'SWAP_ONLY' ? 'Swap Only' : 'Rent Only'}
-                </Text>
-              </View>
-            </View>
-            
-            {/* Location */}
-            <View style={styles.locationRow}>
-              <Ionicons name="location" size={18} color="#667eea" />
-              <Text style={styles.location}>
-                {listing.address.street}, {listing.address.city}, {listing.address.state} {listing.address.zipCode}
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={[styles.typeBadge, { backgroundColor: getListingTypeColor(listing.listingType) }]}>
+              <Text style={styles.typeBadgeText}>
+                {listing.listingType === 'BOTH' ? 'Swap & Rent' : listing.listingType.replace('_ONLY', '')}
               </Text>
             </View>
-            
-            {/* Near University */}
-            <View style={styles.universityRow}>
-              <FontAwesome5 name="graduation-cap" size={14} color="#666" />
-              <Text style={styles.universityText}>Near {listing.nearUniversity}</Text>
-              {listing.distanceToCampus && (
-                <Text style={styles.distanceText}> • {listing.distanceToCampus} miles to campus</Text>
-              )}
+            <View style={styles.stats}>
+              <Ionicons name="eye-outline" size={16} color={theme.colors.onSurfaceVariant} />
+              <Text style={styles.statText}>{listing.views} views</Text>
+              <Ionicons name="heart-outline" size={16} color={theme.colors.onSurfaceVariant} style={{ marginLeft: 10 }} />
+              <Text style={styles.statText}>{listing.favorites} saves</Text>
+            </View>
+          </View>
+
+          {/* Title & Price */}
+          <Text style={styles.title}>{listing.title}</Text>
+          {listing.rentPrice && (
+            <Text style={styles.price}>${listing.rentPrice}/month</Text>
+          )}
+
+          {/* Location */}
+          <View style={styles.locationContainer}>
+            <Ionicons name="location" size={20} color={theme.colors.primary} />
+            <View style={styles.locationText}>
+              <Text style={styles.address}>
+                {listing.address.street}
+              </Text>
+              <Text style={styles.cityState}>
+                {listing.address.city}, {listing.address.state} {listing.address.zipCode}
+              </Text>
+              <Text style={styles.university}>
+                Near {listing.nearUniversity}
+                {listing.distanceToCampus && ` • ${listing.distanceToCampus} miles to campus`}
+              </Text>
             </View>
           </View>
 
           {/* Property Details */}
-          <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle}>Property Details</Text>
-            <View style={styles.detailsGrid}>
-              <View style={styles.detailItem}>
-                <MaterialCommunityIcons 
-                  name={getPropertyTypeIcon(listing.propertyType)} 
-                  size={24} 
-                  color="#667eea" 
-                />
-                <Text style={styles.detailLabel}>Type</Text>
-                <Text style={styles.detailValue}>{listing.propertyType}</Text>
-              </View>
-              
-              <View style={styles.detailItem}>
-                <Ionicons name="bed" size={24} color="#667eea" />
-                <Text style={styles.detailLabel}>Bedrooms</Text>
-                <Text style={styles.detailValue}>{listing.bedrooms}</Text>
-              </View>
-              
-              <View style={styles.detailItem}>
-                <MaterialCommunityIcons name="shower" size={24} color="#667eea" />
-                <Text style={styles.detailLabel}>Bathrooms</Text>
-                <Text style={styles.detailValue}>{listing.bathrooms}</Text>
-              </View>
-              
-              {listing.squareFeet && (
-                <View style={styles.detailItem}>
-                  <MaterialCommunityIcons name="floor-plan" size={24} color="#667eea" />
-                  <Text style={styles.detailLabel}>Size</Text>
-                  <Text style={styles.detailValue}>{listing.squareFeet} sq ft</Text>
-                </View>
-              )}
+          <View style={styles.detailsGrid}>
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="home" size={24} color={theme.colors.onSurfaceVariant} />
+              <Text style={styles.detailLabel}>{listing.propertyType}</Text>
             </View>
-          </View>
-
-          {/* Availability & Pricing */}
-          <View style={styles.availabilitySection}>
-            <Text style={styles.sectionTitle}>Availability & Pricing</Text>
-            
-            <View style={styles.dateContainer}>
-              <Ionicons name="calendar-outline" size={20} color="#666" />
-              <Text style={styles.dateText}>
-                {formatDate(listing.availableFrom)} - {formatDate(listing.availableTo)}
-              </Text>
-              {listing.flexibleDates && (
-                <View style={styles.flexibleBadge}>
-                  <Text style={styles.flexibleText}>Flexible</Text>
-                </View>
-              )}
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="bed" size={24} color={theme.colors.onSurfaceVariant} />
+              <Text style={styles.detailLabel}>{listing.bedrooms} bed</Text>
             </View>
-            
-            {listing.rentPrice && (
-              <View style={styles.pricingContainer}>
-                <View style={styles.priceRow}>
-                  <Text style={styles.priceLabel}>Monthly Rent</Text>
-                  <Text style={styles.priceValue}>${listing.rentPrice}</Text>
-                </View>
-                {listing.securityDeposit && (
-                  <View style={styles.priceRow}>
-                    <Text style={styles.priceLabel}>Security Deposit</Text>
-                    <Text style={styles.priceValue}>${listing.securityDeposit}</Text>
-                  </View>
-                )}
-                {listing.utilitiesIncluded && (
-                  <View style={styles.utilitiesRow}>
-                    <Ionicons name="flash" size={16} color="#27ae60" />
-                    <Text style={styles.utilitiesText}>Utilities Included</Text>
-                  </View>
-                )}
+            <View style={styles.detailItem}>
+              <MaterialCommunityIcons name="shower" size={24} color={theme.colors.onSurfaceVariant} />
+              <Text style={styles.detailLabel}>{listing.bathrooms} bath</Text>
+            </View>
+            {listing.squareFeet && (
+              <View style={styles.detailItem}>
+                <MaterialCommunityIcons name="floor-plan" size={24} color={theme.colors.onSurfaceVariant} />
+                <Text style={styles.detailLabel}>{listing.squareFeet} sqft</Text>
               </View>
             )}
-            
-            {listing.swapPreferences && listing.listingType !== 'RENT_ONLY' && (
-              <View style={styles.swapPreferences}>
-                <Text style={styles.preferencesTitle}>Swap Preferences</Text>
-                {listing.swapPreferences.lookingFor && listing.swapPreferences.lookingFor.length > 0 && (
-                  <Text style={styles.preferencesText}>
-                    Looking for: {listing.swapPreferences.lookingFor.join(', ')}
-                  </Text>
-                )}
-                {listing.swapPreferences.preferredLocations && listing.swapPreferences.preferredLocations.length > 0 && (
-                  <Text style={styles.preferencesText}>
-                    Preferred locations: {listing.swapPreferences.preferredLocations.join(', ')}
-                  </Text>
-                )}
+          </View>
+
+          {/* Availability */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Availability</Text>
+            <View style={styles.availabilityContainer}>
+              <View style={styles.dateCard}>
+                <Text style={styles.dateLabel}>From</Text>
+                <Text style={styles.dateValue}>{formatDate(listing.availableFrom)}</Text>
+              </View>
+              <Ionicons name="arrow-forward" size={20} color={theme.colors.onSurfaceVariant} />
+              <View style={styles.dateCard}>
+                <Text style={styles.dateLabel}>To</Text>
+                <Text style={styles.dateValue}>{formatDate(listing.availableTo)}</Text>
+              </View>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Minimum Stay:</Text>
+              <Text style={styles.infoValue}>{listing.minimumStay} days</Text>
+            </View>
+            {listing.flexibleDates && (
+              <View style={styles.flexibleBadge}>
+                <Ionicons name="calendar-outline" size={16} color={theme.colors.primary} />
+                <Text style={styles.flexibleText}>Flexible Dates</Text>
               </View>
             )}
           </View>
 
           {/* Description */}
-          <View style={styles.descriptionSection}>
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.description}>{listing.description}</Text>
           </View>
 
           {/* Amenities */}
-          {listing.amenities && Object.keys(listing.amenities).some(key => listing.amenities[key]) && (
-            <View style={styles.amenitiesSection}>
-              <Text style={styles.sectionTitle}>Amenities</Text>
-              <View style={styles.amenitiesGrid}>
-                {listing.amenities.wifi && (
-                  <View style={styles.amenityItem}>
-                    <Ionicons name="wifi" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>WiFi</Text>
-                  </View>
-                )}
-                {listing.amenities.parking && (
-                  <View style={styles.amenityItem}>
-                    <Ionicons name="car" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Parking</Text>
-                  </View>
-                )}
-                {listing.amenities.laundry && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="washing-machine" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Laundry</Text>
-                  </View>
-                )}
-                {listing.amenities.airConditioning && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="air-conditioner" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>A/C</Text>
-                  </View>
-                )}
-                {listing.amenities.heating && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="radiator" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Heating</Text>
-                  </View>
-                )}
-                {listing.amenities.furnished && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="sofa" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Furnished</Text>
-                  </View>
-                )}
-                {listing.amenities.petFriendly && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="paw" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Pet Friendly</Text>
-                  </View>
-                )}
-                {listing.amenities.kitchen && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="stove" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Kitchen</Text>
-                  </View>
-                )}
-                {listing.amenities.gym && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="dumbbell" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Gym</Text>
-                  </View>
-                )}
-                {listing.amenities.pool && (
-                  <View style={styles.amenityItem}>
-                    <MaterialCommunityIcons name="pool" size={20} color="#667eea" />
-                    <Text style={styles.amenityText}>Pool</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Amenities</Text>
+            <View style={styles.amenitiesGrid}>
+              {renderAmenity('wifi', 'WiFi', listing.amenities.wifi || false)}
+              {renderAmenity('car', 'Parking', listing.amenities.parking || false)}
+              {renderAmenity('washing-machine', 'Laundry', listing.amenities.laundry || false)}
+              {renderAmenity('air-conditioner', 'AC', listing.amenities.airConditioning || false)}
+              {renderAmenity('fire', 'Heating', listing.amenities.heating || false)}
+              {renderAmenity('sofa', 'Furnished', listing.amenities.furnished || false)}
+              {renderAmenity('paw', 'Pet Friendly', listing.amenities.petFriendly || false)}
+              {renderAmenity('silverware-fork-knife', 'Kitchen', listing.amenities.kitchen || false)}
+              {renderAmenity('dumbbell', 'Gym', listing.amenities.gym || false)}
+              {renderAmenity('pool', 'Pool', listing.amenities.pool || false)}
+            </View>
+            {listing.utilitiesIncluded && (
+              <View style={styles.utilitiesBadge}>
+                <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                <Text style={styles.utilitiesText}>Utilities Included</Text>
+              </View>
+            )}
+          </View>
+
+          {/* House Rules */}
+          {listing.houseRules && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>House Rules</Text>
+              <View style={styles.rulesContainer}>
+                <View style={styles.ruleItem}>
+                  <Ionicons 
+                    name={listing.houseRules.smokingAllowed ? "checkmark-circle" : "close-circle"} 
+                    size={20} 
+                    color={listing.houseRules.smokingAllowed ? "#10B981" : "#EF4444"} 
+                  />
+                  <Text style={styles.ruleText}>
+                    {listing.houseRules.smokingAllowed ? 'Smoking allowed' : 'No smoking'}
+                  </Text>
+                </View>
+                <View style={styles.ruleItem}>
+                  <Ionicons 
+                    name={listing.houseRules.petsAllowed ? "checkmark-circle" : "close-circle"} 
+                    size={20} 
+                    color={listing.houseRules.petsAllowed ? "#10B981" : "#EF4444"} 
+                  />
+                  <Text style={styles.ruleText}>
+                    {listing.houseRules.petsAllowed ? 'Pets allowed' : 'No pets'}
+                  </Text>
+                </View>
+                <View style={styles.ruleItem}>
+                  <Ionicons 
+                    name={listing.houseRules.guestsAllowed ? "checkmark-circle" : "close-circle"} 
+                    size={20} 
+                    color={listing.houseRules.guestsAllowed ? "#10B981" : "#EF4444"} 
+                  />
+                  <Text style={styles.ruleText}>
+                    {listing.houseRules.guestsAllowed ? 'Guests allowed' : 'No guests'}
+                  </Text>
+                </View>
+                {listing.houseRules.quietHours && (
+                  <View style={styles.ruleItem}>
+                    <Ionicons name="moon" size={20} color={theme.colors.primary} />
+                    <Text style={styles.ruleText}>
+                      Quiet hours: {listing.houseRules.quietHours}
+                    </Text>
                   </View>
                 )}
               </View>
-            </View>
-          )}
-
-          {/* House Rules */}
-          {listing.houseRules && listing.houseRules.length > 0 && (
-            <View style={styles.rulesSection}>
-              <Text style={styles.sectionTitle}>House Rules</Text>
-              {listing.houseRules.map((rule: string, index: number) => (
-                <View key={index} style={styles.ruleItem}>
-                  <Text style={styles.ruleBullet}>•</Text>
-                  <Text style={styles.ruleText}>{rule}</Text>
-                </View>
-              ))}
             </View>
           )}
 
           {/* Owner Info */}
-          <View style={styles.ownerSection}>
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Listed by</Text>
-            <View style={styles.ownerCard}>
-              <View style={styles.ownerInfo}>
+            <TouchableOpacity 
+              style={styles.ownerCard}
+              onPress={() => navigation.navigate('UserProfile', { userId: listing.owner._id })}
+            >
+              <View style={styles.ownerAvatar}>
                 {listing.owner.profilePicture ? (
-                  <Image source={{ uri: listing.owner.profilePicture }} style={styles.ownerAvatar} />
+                  <Image 
+                    source={{ uri: listing.owner.profilePicture }} 
+                    style={styles.avatarImage}
+                  />
                 ) : (
-                  <View style={styles.ownerAvatarPlaceholder}>
-                    <Text style={styles.ownerAvatarText}>
-                      {listing.owner.fullName.charAt(0).toUpperCase()}
-                    </Text>
+                  <Ionicons name="person" size={32} color={theme.colors.onSurfaceVariant} />
+                )}
+              </View>
+              <View style={styles.ownerInfo}>
+                <Text style={styles.ownerName}>{listing.owner.fullName}</Text>
+                <Text style={styles.ownerUniversity}>{listing.owner.university}</Text>
+                {listing.owner.yearInSchool && (
+                  <Text style={styles.ownerDetails}>
+                    {listing.owner.yearInSchool}
+                    {listing.owner.major && ` • ${listing.owner.major}`}
+                  </Text>
+                )}
+              </View>
+              <Ionicons name="chevron-forward" size={24} color={theme.colors.onSurfaceVariant} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Pricing Details */}
+          {listing.rentPrice && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Pricing</Text>
+              <View style={styles.pricingContainer}>
+                <View style={styles.pricingRow}>
+                  <Text style={styles.pricingLabel}>Monthly Rent</Text>
+                  <Text style={styles.pricingValue}>${listing.rentPrice}</Text>
+                </View>
+                {listing.securityDeposit && (
+                  <View style={styles.pricingRow}>
+                    <Text style={styles.pricingLabel}>Security Deposit</Text>
+                    <Text style={styles.pricingValue}>${listing.securityDeposit}</Text>
                   </View>
                 )}
-                <View style={styles.ownerDetails}>
-                  <Text style={styles.ownerName}>{listing.owner.fullName}</Text>
-                  <Text style={styles.ownerUniversity}>{listing.owner.university}</Text>
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="shield-checkmark" size={14} color="#27ae60" />
-                    <Text style={styles.verifiedText}>Verified Student</Text>
+                {!listing.utilitiesIncluded && (
+                  <View style={styles.pricingRow}>
+                    <Text style={styles.pricingLabel}>Utilities</Text>
+                    <Text style={styles.pricingValue}>Not included</Text>
                   </View>
-                </View>
+                )}
               </View>
-              <TouchableOpacity style={styles.viewProfileButton}>
-                <Text style={styles.viewProfileText}>View Profile</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-
-          {/* Stats */}
-          <View style={styles.statsSection}>
-            <View style={styles.statItem}>
-              <Ionicons name="eye-outline" size={20} color="#999" />
-              <Text style={styles.statText}>{listing.views} views</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons name="heart-outline" size={20} color="#999" />
-              <Text style={styles.statText}>{listing.favorites} favorites</Text>
-            </View>
-            <View style={styles.statItem}>
-              <Ionicons name="time-outline" size={20} color="#999" />
-              <Text style={styles.statText}>Listed {formatDate(listing.createdAt)}</Text>
-            </View>
-          </View>
-
-          {/* Report Button */}
-          <TouchableOpacity style={styles.reportButton} onPress={handleReportListing}>
-            <Ionicons name="flag-outline" size={16} color="#999" />
-            <Text style={styles.reportText}>Report this listing</Text>
-          </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
 
-      {/* Bottom Action Bar */}
-      <View style={styles.bottomBar}>
-        {listing.rentPrice && (
-          <View style={styles.priceContainer}>
-            <Text style={styles.bottomPrice}>${listing.rentPrice}</Text>
-            <Text style={styles.bottomPriceLabel}>/month</Text>
-          </View>
-        )}
-        <TouchableOpacity style={styles.contactButton} onPress={handleContactOwner}>
+      {/* Bottom Action Buttons */}
+      <View style={styles.bottomActions}>
+        <TouchableOpacity 
+          style={styles.messageButton}
+          onPress={handleContactOwner}
+        >
+          <Ionicons name="chatbubble-outline" size={20} color={theme.colors.primary} />
+          <Text style={styles.messageButtonText}>Message</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.primaryButton}
+          onPress={handleRequestSwap}
+        >
           <LinearGradient
-            colors={['#667eea', '#764ba2']}
-            style={styles.contactButtonGradient}
+            colors={isDarkMode ? [theme.colors.primary, theme.colors.secondary] : ['#667eea', '#764ba2']}
+            style={StyleSheet.absoluteFillObject}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <Ionicons name="chatbubbles" size={20} color="#fff" />
-            <Text style={styles.contactButtonText}>Contact Owner</Text>
-          </LinearGradient>
+            end={{ x: 1, y: 1 }}
+          />
+          <Text style={styles.primaryButtonText}>
+            {listing.listingType === 'RENT_ONLY' ? 'Request to Rent' : 'Request Swap'}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (theme: any, isDarkMode: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#666',
-  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
   errorText: {
-    fontSize: 18,
-    color: '#666',
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  backButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.onSurface,
   },
-  imageContainer: {
-    position: 'relative',
+  gallery: {
+    height: 300,
+    backgroundColor: theme.colors.surface,
+  },
+  photoContainer: {
+    width: screenWidth,
     height: 300,
   },
-  image: {
-    width: SCREEN_WIDTH,
-    height: 300,
+  photo: {
+    width: '100%',
+    height: '100%',
   },
-  imageIndicatorContainer: {
+  placeholderPhoto: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  placeholderText: {
+    marginTop: 10,
+    color: theme.colors.onSurfaceVariant,
+  },
+  noPhotoContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+  },
+  noPhotoText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: theme.colors.onSurfaceVariant,
+  },
+  photoIndicator: {
     position: 'absolute',
     bottom: 20,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  imageIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-    marginHorizontal: 4,
+  photoIndicatorText: {
+    color: '#fff',
+    fontSize: 14,
   },
-  imageIndicatorActive: {
-    backgroundColor: '#fff',
-    width: 20,
-  },
-  headerActions: {
+  photoActions: {
     position: 'absolute',
-    top: 50,
+    top: Platform.OS === 'ios' ? 50 : 30,
     left: 20,
     right: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  headerButton: {
+  rightActions: {
+    flexDirection: 'row',
+  },
+  actionButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  headerRightActions: {
-    flexDirection: 'row',
-    gap: 10,
   },
   content: {
     padding: 20,
   },
-  titleSection: {
-    marginBottom: 20,
-  },
-  titleRow: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    flex: 1,
-    marginRight: 10,
+    alignItems: 'center',
+    marginBottom: 15,
   },
   typeBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
-  },
-  swapBadge: {
-    backgroundColor: '#e8f4fd',
-  },
-  rentBadge: {
-    backgroundColor: '#fff4e6',
-  },
-  bothBadge: {
-    backgroundColor: '#f0f4ff',
+    borderRadius: 8,
   },
   typeBadgeText: {
     fontSize: 12,
+    color: '#fff',
     fontWeight: '600',
-    color: '#667eea',
+    textTransform: 'uppercase',
   },
-  locationRow: {
+  stats: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  location: {
-    fontSize: 16,
-    color: '#666',
-    marginLeft: 5,
+  statText: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginLeft: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.onSurface,
+    marginBottom: 10,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
+    marginBottom: 20,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  locationText: {
+    marginLeft: 10,
     flex: 1,
   },
-  universityRow: {
+  address: {
+    fontSize: 16,
+    color: theme.colors.onSurface,
+    fontWeight: '500',
+  },
+  cityState: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  university: {
+    fontSize: 14,
+    color: theme.colors.primary,
+    marginTop: 4,
+  },
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+  },
+  detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '50%',
+    paddingVertical: 10,
   },
-  universityText: {
+  detailLabel: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.onSurface,
     marginLeft: 8,
   },
-  distanceText: {
-    fontSize: 14,
-    color: '#999',
-  },
-  detailsSection: {
+  section: {
     marginBottom: 25,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.onSurface,
     marginBottom: 15,
   },
-  detailsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -10,
-  },
-  detailItem: {
-    width: '25%',
-    paddingHorizontal: 10,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  detailLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 5,
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginTop: 2,
-  },
-  availabilitySection: {
-    marginBottom: 25,
-  },
-  dateContainer: {
+  availabilityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 15,
   },
-  dateText: {
-    fontSize: 16,
-    color: '#666',
-    marginLeft: 8,
-  },
-  flexibleBadge: {
-    marginLeft: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: '#e8f4fd',
-    borderRadius: 12,
-  },
-  flexibleText: {
-    fontSize: 12,
-    color: '#667eea',
-    fontWeight: '500',
-  },
-  pricingContainer: {
-    backgroundColor: '#f8f9fa',
+  dateCard: {
+    flex: 1,
+    backgroundColor: theme.colors.surfaceVariant,
     padding: 15,
     borderRadius: 12,
-    marginBottom: 15,
+    alignItems: 'center',
   },
-  priceRow: {
+  dateLabel: {
+    fontSize: 12,
+    color: theme.colors.onSurfaceVariant,
+    marginBottom: 4,
+  },
+  dateValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  priceLabel: {
+  infoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.onSurfaceVariant,
   },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: theme.colors.onSurface,
   },
-  utilitiesRow: {
+  flexibleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 5,
+    backgroundColor: theme.colors.primaryContainer,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
   },
-  utilitiesText: {
-    fontSize: 14,
-    color: '#27ae60',
-    marginLeft: 5,
-  },
-  swapPreferences: {
-    backgroundColor: '#f0f4ff',
-    padding: 15,
-    borderRadius: 12,
-  },
-  preferencesTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#667eea',
-    marginBottom: 8,
-  },
-  preferencesText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 5,
-  },
-  descriptionSection: {
-    marginBottom: 25,
+  flexibleText: {
+    fontSize: 12,
+    color: theme.colors.primary,
+    marginLeft: 6,
+    fontWeight: '500',
   },
   description: {
     fontSize: 15,
-    color: '#666',
     lineHeight: 22,
-  },
-  amenitiesSection: {
-    marginBottom: 25,
+    color: theme.colors.onSurface,
   },
   amenitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -10,
   },
   amenityItem: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '50%',
-    paddingHorizontal: 10,
-    marginBottom: 12,
+    paddingVertical: 10,
   },
-  amenityText: {
+  amenityLabel: {
     fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
+    color: theme.colors.onSurface,
+    marginLeft: 10,
   },
-  rulesSection: {
-    marginBottom: 25,
-  },
-  ruleItem: {
+  utilitiesBadge: {
     flexDirection: 'row',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginTop: 15,
+    backgroundColor: isDarkMode ? 'rgba(16, 185, 129, 0.1)' : '#F0FDF4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
   },
-  ruleBullet: {
+  utilitiesText: {
     fontSize: 14,
-    color: '#666',
-    marginRight: 8,
+    color: '#10B981',
+    marginLeft: 8,
+    fontWeight: '500',
   },
-  ruleText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-  },
-  ownerSection: {
-    marginBottom: 25,
-  },
-  ownerCard: {
-    backgroundColor: '#f8f9fa',
+  rulesContainer: {
+    backgroundColor: theme.colors.surfaceVariant,
     padding: 15,
     borderRadius: 12,
   },
-  ownerInfo: {
+  ruleItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  ruleText: {
+    fontSize: 14,
+    color: theme.colors.onSurface,
+    marginLeft: 10,
+  },
+  ownerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: 15,
+    borderRadius: 12,
   },
   ownerAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-  },
-  ownerAvatarPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#667eea',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
   },
-  ownerAvatarText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
-  ownerDetails: {
-    marginLeft: 12,
+  ownerInfo: {
     flex: 1,
   },
   ownerName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: theme.colors.onSurface,
   },
   ownerUniversity: {
     fontSize: 14,
-    color: '#666',
+    color: theme.colors.primary,
     marginTop: 2,
   },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  verifiedText: {
+  ownerDetails: {
     fontSize: 12,
-    color: '#27ae60',
-    marginLeft: 4,
+    color: theme.colors.onSurfaceVariant,
+    marginTop: 2,
   },
-  viewProfileButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderWidth: 1,
-    borderColor: '#667eea',
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  viewProfileText: {
-    fontSize: 14,
-    color: '#667eea',
-    fontWeight: '500',
-  },
-  statsSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 15,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    marginBottom: 15,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statText: {
-    fontSize: 14,
-    color: '#999',
-    marginLeft: 5,
-  },
-  reportButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-  },
-  reportText: {
-    fontSize: 14,
-    color: '#999',
-    marginLeft: 5,
-  },
-  bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  bottomPrice: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  bottomPriceLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 2,
-  },
-  contactButton: {
-    flex: 1,
-    marginLeft: 20,
+  pricingContainer: {
+    backgroundColor: theme.colors.surfaceVariant,
+    padding: 15,
     borderRadius: 12,
-    overflow: 'hidden',
   },
-  contactButtonGradient: {
+  pricingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  pricingLabel: {
+    fontSize: 14,
+    color: theme.colors.onSurfaceVariant,
+  },
+  pricingValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: theme.colors.onSurface,
+  },
+  bottomActions: {
+    flexDirection: 'row',
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.outline,
+  },
+  messageButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 15,
+    marginRight: 10,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    backgroundColor: 'transparent',
   },
-  contactButtonText: {
-    color: '#fff',
+  messageButtonText: {
     fontSize: 16,
     fontWeight: '600',
+    color: theme.colors.primary,
     marginLeft: 8,
+  },
+  primaryButton: {
+    flex: 2,
+    paddingVertical: 15,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
   },
 });
 
