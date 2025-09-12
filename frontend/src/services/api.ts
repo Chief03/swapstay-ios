@@ -379,6 +379,100 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Swap Request methods
+  async createSwapRequest(requestData: {
+    requestType: 'SWAP' | 'RENT';
+    targetListingId: string;
+    requesterListingId?: string;
+    requestedDates: {
+      startDate: string;
+      endDate: string;
+    };
+    message: string;
+    proposedPrice?: number;
+  }): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request('/requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestData),
+    });
+  }
+
+  async getUserSwapRequests(type: 'sent' | 'received' | 'all' = 'all'): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/requests?type=${type}`, {
+      method: 'GET',
+    });
+  }
+
+  async getSwapRequest(requestId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/requests/${requestId}`, {
+      method: 'GET',
+    });
+  }
+
+  async respondToSwapRequest(
+    requestId: string, 
+    action: 'ACCEPT' | 'DECLINE',
+    message?: string,
+    counterOffer?: any
+  ): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/requests/${requestId}/respond`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action, message, counterOffer }),
+    });
+  }
+
+  async cancelSwapRequest(requestId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/requests/${requestId}/cancel`, {
+      method: 'PUT',
+    });
+  }
+
+  async getListingSwapRequests(listingId: string): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request(`/requests/listing/${listingId}`, {
+      method: 'GET',
+    });
+  }
+
+  async getRequestStatistics(): Promise<ApiResponse> {
+    if (!this.token) {
+      throw new Error('Authentication required');
+    }
+
+    return this.request('/requests/stats', {
+      method: 'GET',
+    });
+  }
 }
 
 export default new ApiService();

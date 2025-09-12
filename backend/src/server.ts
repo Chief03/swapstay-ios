@@ -9,6 +9,7 @@ import listingRoutes from './routes/listingRoutes';
 import userRoutes from './routes/userRoutes';
 import wishlistRoutes from './routes/wishlistRoutes';
 import messageRoutes from './routes/messageRoutes';
+import swapRequestRoutes from './routes/swapRequestRoutes';
 import SocketHandler from './socket/socketHandler';
 
 // Load environment variables
@@ -65,6 +66,7 @@ app.use('/api/v1/listings', listingRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/wishlist', wishlistRoutes);
 app.use('/api/v1/messages', messageRoutes);
+app.use('/api/v1/requests', swapRequestRoutes);
 
 app.get('/api/v1', (req, res) => {
   res.json({
@@ -100,7 +102,15 @@ app.get('/api/v1', (req, res) => {
         markAsRead: 'PUT /api/v1/messages/conversations/:id/read (auth required)',
         getUnreadCount: 'GET /api/v1/messages/unread-count (auth required)'
       },
-      swaps: '/api/v1/swaps (coming soon)'
+      requests: {
+        create: 'POST /api/v1/requests (auth required)',
+        getUserRequests: 'GET /api/v1/requests (auth required)',
+        getRequest: 'GET /api/v1/requests/:id (auth required)',
+        respond: 'PUT /api/v1/requests/:id/respond (auth required)',
+        cancel: 'PUT /api/v1/requests/:id/cancel (auth required)',
+        getListingRequests: 'GET /api/v1/requests/listing/:id (auth required)',
+        getStats: 'GET /api/v1/requests/stats (auth required)'
+      }
     }
   });
 });

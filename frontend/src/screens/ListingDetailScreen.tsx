@@ -18,6 +18,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
 import apiService from '../services/api';
+import RequestModal from './RequestModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -91,6 +92,7 @@ const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, r
   const [isLoading, setIsLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [showRequestModal, setShowRequestModal] = useState(false);
 
   useEffect(() => {
     loadListing();
@@ -155,8 +157,13 @@ const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, r
   };
 
   const handleRequestSwap = () => {
-    // TODO: Implement swap request
-    Alert.alert('Coming Soon', 'Swap request feature will be available soon!');
+    if (!listing) return;
+    setShowRequestModal(true);
+  };
+
+  const handleRequestSuccess = () => {
+    // Could navigate to messages or refresh data
+    console.log('Request sent successfully');
   };
 
   const handleShare = () => {
@@ -559,6 +566,14 @@ const ListingDetailScreen: React.FC<ListingDetailScreenProps> = ({ navigation, r
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Request Modal */}
+      <RequestModal
+        visible={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        listing={listing}
+        onSuccess={handleRequestSuccess}
+      />
     </SafeAreaView>
   );
 };
