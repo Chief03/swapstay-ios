@@ -18,6 +18,7 @@ import ListingDetailScreen from './src/screens/ListingDetailScreen';
 import FilterScreen from './src/screens/FilterScreen';
 import EditProfileScreen from './src/screens/EditProfileScreen';
 import ChatScreen from './src/screens/ChatScreen';
+import MyRequestsScreen from './src/screens/MyRequestsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -146,6 +147,13 @@ function AppContent() {
         <Stack.Screen 
           name="Chat" 
           component={ChatScreen}
+          options={{ 
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen 
+          name="MyRequests" 
+          component={MyRequestsScreen}
           options={{ 
             headerShown: false,
           }}

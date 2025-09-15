@@ -37,7 +37,7 @@ swapstay/
 └── README.md            # You are here!
 ```
 
-## 🚀 Current State (As of Sep 12, 2025 - 4:30 PM)
+## 🚀 Current State (As of Sep 12, 2025 - 10:45 PM)
 
 ### ✅ Completed Features
 
@@ -124,7 +124,7 @@ swapstay/
    - Real-time filter application with visual feedback
    - Multiple filter combinations supported
 
-11. **Interactive Listing Detail Screen** ✨ **NEW!**
+11. **Interactive Listing Detail Screen** ✨ 
    - Swipeable photo gallery with carousel
    - Photo counter and navigation indicators
    - Save to wishlist with animated heart icon
@@ -136,7 +136,17 @@ swapstay/
    - Bottom action bar with Message and Request buttons
    - Full dark mode support
 
-12. **Main App Navigation**
+12. **Match/Swap Request System** ✨ **NEW!**
+   - **Smart Request Modal**: Interactive UI for swap/rent requests
+   - **Property Selection**: Choose from user's listings for swaps
+   - **Date Picker Integration**: Native date selection with validation
+   - **Price Input**: Proposed pricing for rent requests
+   - **Smart Defaults**: Auto-populated messages and prices
+   - **Request Type Detection**: Adapts based on listing type (SWAP_ONLY, RENT_ONLY, BOTH)
+   - **Real-time Validation**: Instant feedback and error handling
+   - **Smooth Animations**: Beautiful modal transitions and interactions
+
+13. **Main App Navigation**
    - Optimized bottom tab navigation (Home, Wishlist ❤️, Messages, Profile)
    - Removed redundant Search tab (search available in Home)
    - Navigation to CreateListing and EditProfile screens
@@ -194,7 +204,7 @@ swapstay/
   - Database persistence with MongoDB
   - Debug logging for troubleshooting
 
-**Wishlist System:** ✨ **NEW!**
+**Wishlist System:** ✨
 - ✨ **Wishlist Endpoints:**
   - GET /api/v1/wishlist (get all saved listings)
   - POST /api/v1/wishlist/:listingId (add to wishlist)
@@ -206,6 +216,29 @@ swapstay/
   - Duplicate prevention
   - Full listing details with owner information
   - MongoDB persistence with references
+
+**Match/Swap Request System:** ✨ **NEW!**
+- ✨ **SwapRequest Model:**
+  - Complete request lifecycle (PENDING, ACCEPTED, DECLINED, CANCELLED, EXPIRED)
+  - Support for both SWAP and RENT request types
+  - Smart compatibility scoring with detailed factors breakdown
+  - Auto-expiry system (7-day lifecycle with cleanup)
+  - Integration with messaging system for automatic conversations
+- ✨ **Smart Matching Algorithm:**
+  - AI-powered compatibility scoring based on 4 factors:
+  - 📅 Date overlap analysis (30% weight)
+  - 🌍 Location/university matching (20% weight)
+  - 🏠 Property type compatibility (25% weight)
+  - 🎓 Academic/university matching (25% weight)
+  - Match insights generation for UI display
+- ✨ **Complete API Endpoints:**
+  - POST /api/v1/requests (create swap/rent requests)
+  - GET /api/v1/requests (get user's requests with filtering)
+  - GET /api/v1/requests/:id (get specific request details)
+  - PUT /api/v1/requests/:id/respond (accept/decline requests)
+  - PUT /api/v1/requests/:id/cancel (cancel pending requests)
+  - GET /api/v1/requests/listing/:id (get requests for specific listing)
+  - GET /api/v1/requests/stats (get request statistics)
 
 #### Shared Resources
 - TypeScript types for User, Listing, Swap, Message
@@ -282,7 +315,18 @@ Password: password123
 
 ## 🔄 Last Working Session Context
 
-**Latest Updates (Sep 12, 2025 - 4:30 PM):**
+**Latest Updates (Sep 12, 2025 - 10:45 PM):**
+- ✅ **MATCH/SWAP REQUEST SYSTEM COMPLETE**
+  - Built complete request lifecycle from creation to expiry
+  - Smart compatibility scoring algorithm with 4-factor analysis
+  - Interactive request modal with property selection and date pickers
+  - Backend API with full CRUD operations and statistics
+  - Automatic conversation creation for seamless communication
+  - Support for both SWAP and RENT request types
+  - 7-day auto-expiry system with background cleanup
+  - Verified end-to-end request flow from UI to database
+
+**Previous Updates (Sep 12, 2025 - 4:30 PM):**
 - ✅ **LISTING DETAIL SCREEN COMPLETE**
   - Built comprehensive interactive listing detail view
   - Swipeable photo gallery with carousel and indicators
@@ -397,25 +441,34 @@ Password: password123
    - Wishlist/save functionality
    - Interactive listing detail view
 
-3. **Trust & Safety** ✅
+3. **Match/Swap Request System** ✅ **NEW!**
+   - Send swap/rental requests from listing details
+   - Smart compatibility scoring (4-factor AI algorithm)
+   - Request lifecycle management (pending, accepted, declined, expired)
+   - Automatic conversation creation
+   - Support for both property swaps and rentals
+
+4. **Real-time Messaging** ✅
+   - WebSocket-powered live chat
+   - Conversation management
+   - Typing indicators and read receipts
+   - Message notifications
+
+5. **Trust & Safety** ✅
    - .edu email verification
    - User profiles with university info
 
 ### 🔴 Missing MVP Features:
 
-1. **Match/Swap Requests** ❌
-   - Send/receive swap or sublet requests
-   - Accept/decline functionality
-   - Request status tracking
+1. **My Requests Screen** ❌ (80% complete - backend done)
+   - View sent/received requests with status tracking
+   - Accept/decline request UI
+   - Interactive request cards with match scores
 
-2. **Basic Messaging** ❌
-   - In-app chat between users
-   - Message history
-   - Notification badges
-
-3. **Admin Dashboard** ❌
+2. **Admin Dashboard** ❌
    - View users and listings
    - Remove inappropriate content
+   - Basic usage analytics
 
 ## 🚦 Next Steps (TODO)
 

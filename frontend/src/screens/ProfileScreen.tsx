@@ -151,6 +151,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
       case 'listings':
         Alert.alert('My Listings', 'View and manage your swap listings');
         break;
+      case 'myRequests':
+        navigation.navigate('MyRequests' as never);
+        break;
       case 'savedSwaps':
         Alert.alert('Saved Swaps', 'View your saved swap opportunities');
         break;
@@ -280,6 +283,17 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
               <Text style={styles.menuItemText}>My Listings</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.menuItem, { backgroundColor: theme.colors.surface }]}
+            onPress={() => handleSettingPress('myRequests')}
+          >
+            <View style={styles.menuItemLeft}>
+              <Ionicons name="swap-horizontal-outline" size={22} color={theme.colors.primary} />
+              <Text style={[styles.menuItemText, { color: theme.colors.onSurface }]}>My Requests</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={theme.colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <TouchableOpacity 
